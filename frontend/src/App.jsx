@@ -38,6 +38,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/video/:id" element={<VideoDetail />} />
+            
             <Route path="/channel" element={
               <ProtectedRoute>
                 <ChannelHome />

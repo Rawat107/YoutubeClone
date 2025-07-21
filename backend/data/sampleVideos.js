@@ -192,7 +192,7 @@ const sampleVideos = [
     views: 392000,
     uploadDate: "2025-05-20",
     category: "Gaming",
-    youtubeUrl: "https://youtu.be/VZ2js6j4HvU?si=AJuVV93G5qYIV7aD",
+    youtubeUrl: "https://www.youtube.com/embed/VZ2js6j4HvU?si=6hLEFkUV-hi2zYUX",
     likes: 112000,
     dislikes: 5600
   },
@@ -244,7 +244,7 @@ const sampleVideos = [
     views: 1200000,
     uploadDate: "2024-09-15",
     category: "Fashion",
-    youtubeUrl: "https://youtu.be/aEEhRRQG804?si=DQz34XkSqGUiAAc3",
+    youtubeUrl: "https://www.youtube.com/embed/aEEhRRQG804?si=LU0NG4_HH7ykgCJe",
     likes: 62000,
     dislikes: 1800
   },
@@ -257,7 +257,7 @@ const sampleVideos = [
     views: 39000,
     uploadDate: "2024-08-28",
     category: "Fashion",
-    youtubeUrl: "https://youtu.be/dWCqxQM0qhE?si=cr9IEb1o9LfA4wL-",
+    youtubeUrl: "https://www.youtube.com/embed/dWCqxQM0qhE?si=es3-id4xrYXhBRcM",
     likes: 20400,
     dislikes: 320
   }

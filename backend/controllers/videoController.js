@@ -156,27 +156,38 @@ export const getAllVideos = async (req, res) => {
 export const getVideoById = async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     const video = await Video.findById(id)
-      .populate('userId', 'username avatar')
-      .populate('channelId', 'name username')
-      .populate('comments');
+      .populate({
+        path: 'channelId',
+        select: 'name username',
+        match: { _id: { $exists: true } } // Only populate if channelId exists
+      })
+      .populate({
+        path: 'userId',
+        select: 'username avatar',
+        match: { _id: { $exists: true } } // Only populate if userId exists
+      });
 
     if (!video) {
-      return res.status(404).json({ error: 'Video not found' });
+      return res.status(404).json({ message: 'Video not found' });
     }
 
     // Increment view count
-    video.views += 1;
+    video.views = (video.views || 0) + 1;
     await video.save();
 
-    res.json(video);
+    res.json({
+      success: true,
+      video
+    });
 
   } catch (error) {
-    console.error('Get video error:', error);
-    res.status(500).json({ error: 'Failed to fetch video' });
+    console.error('Get video by ID error:', error);
+    res.status(500).json({ message: 'Failed to fetch video' });
   }
 };
+
 
 // Get videos by user ID
 export const getVideosByUser = async (req, res) => {

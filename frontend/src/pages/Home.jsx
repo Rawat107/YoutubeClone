@@ -1,20 +1,46 @@
-import { useState } from "react";
-import sampleVideos from "../../../backend/data/sampleVideos.js";
+import { useState, useEffect } from "react";
 import VideoCard from "../components/VideoCard";
 import { useSearch } from "../context/SearchContext";
+import axios from "../utils/axios";
 
-const categories = ["All", "Tech", "Education", "Music", "Sports", "Movies", "Entertainment", "Gaming", 'Fashion'];
+const categories = [
+  "All",
+  "Tech",
+  "Education",
+  "Music",
+  "Sports",
+  "Movies",
+  "Entertainment",
+  "Gaming",
+  "Fashion",
+];
 
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { searchTerm } = useSearch();
 
-  const filteredVideos = sampleVideos.filter((video) => {
-    const matchesCategory =
-      selectedCategory === "All" || video.category === selectedCategory;
-    const matchesSearch = video.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  useEffect(() => {
+    const fetchVideos = async () => {
+      setLoading(true);
+      try {
+        // Build query params for category and search
+        const params = new URLSearchParams();
+        if (selectedCategory !== "All") params.append("category", selectedCategory);
+        if (searchTerm) params.append("search", searchTerm);
+
+        const response = await axios.get(`/videos?${params.toString()}`);
+        setVideos(response.data.videos || []);
+      } catch (err) {
+        setVideos([]); // fallback to empty array
+      }
+      setLoading(false);
+    };
+    fetchVideos();
+  }, [selectedCategory, searchTerm]);
+
+  const filteredVideos = videos; // already filtered by backend
 
   return (
     <>
@@ -51,12 +77,23 @@ const Home = () => {
           xl:grid-cols-5
           min-[340px]:gap-[0.75rem]
         ">
-          {filteredVideos.map((video) => (
-            <VideoCard key={video.videoId} video={video} />
-          ))}
+          {loading
+            ? [...Array(10)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 rounded-lg aspect-video mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ))
+            : filteredVideos.map((video) => (
+                <VideoCard
+                  key={video._id}
+                  video={video}
+                />
+              ))}
         </div>
 
-        {filteredVideos.length === 0 && (
+        {!loading && filteredVideos.length === 0 && (
           <div className="text-center text-gray-500 mt-12">
             No videos match your search.
           </div>

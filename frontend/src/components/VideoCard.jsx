@@ -1,42 +1,57 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 
-const VideoCard = ({ video }) => {
-  // Fixed: Generate static duration based on video ID, not random
+const VideoCard = ({ video, showChannel = true }) => {
+  // Static duration based on video ID
   const staticDuration = useMemo(() => {
-    const videoId = video.videoId || video._id || 'default';
+    const videoId = video._id || video.videoId || 'default';
     let hash = 0;
     for (let i = 0; i < videoId.length; i++) {
       hash = ((hash << 5) - hash) + videoId.charCodeAt(i);
       hash = hash & hash;
     }
-    const minutes = Math.abs(hash) % 15 + 1; // 1-15 minutes
-    const seconds = Math.abs(hash >> 8) % 60; // 0-59 seconds
+    const minutes = Math.abs(hash) % 15 + 1;
+    const seconds = Math.abs(hash >> 8) % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }, [video.videoId, video._id]);
+  }, [video._id, video.videoId]);
+
+  // Get display channel name (works for both sample and real data)
+  const displayChannelName = video.channelName || 
+    (video.channelId && video.channelId.name) || 
+    "Unknown Channel";
 
   return (
-    <Link to={`/video/${video.videoId}`} className="block">
-      <div className="cursor-pointer group">
-        {/* Fixed: Better responsive image container */}
-        <div className="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden">
+    <Link to={`/video/${video._id}`} className="block w-full">
+      <div className="cursor-pointer group w-full">
+        {/* Video thumbnail with static duration */}
+        <div className="relative w-full bg-gray-200 rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
           <img
             src={video.thumbnailUrl}
             alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
           />
-          {/* Fixed: Static duration overlay */}
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+          {/* Duration overlay */}
+          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded-md font-medium">
             {staticDuration}
           </div>
         </div>
         
-        {/* Fixed: Better text layout for mobile */}
-        <div className="mt-3 px-1">
-          <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">
+        {/* Video info */}
+        <div className="mt-3 w-full">
+          <h3 className="text-sm font-semibold text-gray-900 leading-5 mb-1" style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
+          }}>
             {video.title}
           </h3>
-          <p className="text-xs text-gray-600 mt-1">{video.channelName}</p>
+          {showChannel && (
+            <p className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+              {displayChannelName}
+            </p>
+          )}
           <p className="text-xs text-gray-500 mt-1">
             {video.views?.toLocaleString()} views • {new Date(video.uploadDate).toLocaleDateString()}
           </p>
