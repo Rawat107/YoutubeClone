@@ -5,6 +5,8 @@ import authRoutes from './routes/authRoutes.js';
 import channelRoutes from './routes/channelRoutes.js';
 import videoRoutes from './routes/videoRoutes.js'; // ADDED
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import requestLogger from './middleware/requestLogger.js';
 
 dotenv.config();
@@ -25,9 +27,13 @@ app.use('/', authRoutes);
 app.use('/', channelRoutes);
 app.use('/', videoRoutes); // ADDED
 
-// Serve static files for uploads
-app.use('/uploads', express.static('uploads')); // ADDED
+/* ----------- static files ----------- */
+// __dirname workaround for ES-modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
+// serves uploaded video + thumbnail files, does NOT interfere with React routes
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => {
   res.send('YouTube Clone API running');
 });

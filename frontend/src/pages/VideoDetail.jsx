@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   FaThumbsUp, 
   FaThumbsDown, 
@@ -15,6 +15,38 @@ import {
 import VideoCard from "../components/VideoCard";
 import { useAuth } from "../context/AuthContext";
 import axios from "../utils/axios";
+import { generateSeededRandom } from "../utils/channelUtils.js";
+import NotificationAlert from "../components/NotificationAlert.jsx";
+
+const isYouTubeUrl = url =>
+  typeof url === "string" &&
+  (url.includes("youtube.com") || url.includes("youtu.be"));
+
+const getEmbedUrl = url => {
+  if (url.includes("youtube.com/watch?v=")) {
+    const videoId = url.split("v=")[1].split("&")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+  if (url.includes("youtu.be/")) {
+    const videoId = url.split("youtu.be/")[1].split("?")[0];
+    return `https://www.youtube.com/embed/${videoId}`;
+  }
+  return url;
+};
+
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+const getLocalVideoUrl = video => {
+  if (!video?.videoUrl) return "";
+  return `${BASE_URL}/${video.videoUrl.replace(/\\/g, "/")}`;
+};
+
+const getThumbnailUrl = video => {
+  if (!video?.thumbnailUrl) return "";
+  if (video.thumbnailUrl.startsWith("http")) return video.thumbnailUrl;
+  return `${BASE_URL}/${video.thumbnailUrl.replace(/\\/g, "/")}`;
+};
+
 
 const VideoDetail = () => {
   const { id } = useParams();
@@ -31,10 +63,26 @@ const VideoDetail = () => {
   const [userDisliked, setUserDisliked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [dislikeCount, setDislikeCount] = useState(0);
-  
-  // New state for comment editing
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState(null);
+
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [showAlert, setShowAlert] = useState({ open: false, message: "" });
+
+  const subCount = useMemo(() => {
+    const seed = video?.channelName || video?.channelId?.name || "default";
+    return generateSeededRandom(seed, 100, 50000);
+  }, [video]);
+
+  const avatarColor = useMemo(() => {
+    const colors = ["text-purple-500", "text-blue-500", "text-green-500", "text-amber-500"];
+    const username = user?.username || "U";
+    const index = username.charCodeAt(0) % colors.length;
+    return colors[index];
+  }, [user]);
+
 
   useEffect(() => {
     const fetchVideoData = async () => {
@@ -78,7 +126,7 @@ const VideoDetail = () => {
 
   const handleLike = async () => {
     if (!user) {
-      alert("Please log in to like videos");
+      setShowAuthPrompt(true);
       return;
     }
 
@@ -101,8 +149,8 @@ const VideoDetail = () => {
   };
 
   const handleDislike = async () => {
-    if (!user) {
-      alert("Please log in to dislike videos");
+     if (!user) {
+      setShowAuthPrompt(true);
       return;
     }
 
@@ -127,30 +175,32 @@ const VideoDetail = () => {
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!user) {
-      alert("Please log in to comment");
+      setShowAuthPrompt(true);
       return;
     }
 
-    if (newComment.trim()) {
-      const newCommentObj = {
-        id: Date.now(),
-        user: user.username,
-        text: newComment,
-        timestamp: "Just now",
-        userId: user.id || user._id // Store user ID for ownership checking
-      };
-      setComments([newCommentObj, ...comments]);
-      setNewComment("");
+    if (!newComment.trim()) {
+      setShowAlert({ open: true, message: "Comment cannot be empty" });
+      return;
     }
+
+    const newCommentObj = {
+      id: Date.now(),
+      user: user.username,
+      text: newComment,
+      timestamp: "Just now",
+      userId: user.id || user._id,
+    };
+    setComments([newCommentObj, ...comments]);
+    setNewComment("");
   };
 
-  // New function to handle comment editing
+
   const handleEditComment = (commentId, currentText) => {
     setEditingCommentId(commentId);
     setEditCommentText(currentText);
   };
 
-  // New function to save edited comment
   const handleSaveEdit = () => {
     if (!editCommentText.trim()) {
       alert("Comment cannot be empty");
@@ -173,22 +223,25 @@ const VideoDetail = () => {
     setEditCommentText("");
   };
 
-  // New function to cancel editing
   const handleCancelEdit = () => {
     setEditingCommentId(null);
     setEditCommentText("");
   };
 
-  // New function to delete comment
   const handleDeleteComment = (commentId) => {
-    if (window.confirm("Are you sure you want to delete this comment?")) {
-      setComments(prevComments =>
-        prevComments.filter(comment => comment.id !== commentId)
-      );
-    }
+    setDeleteCommentId(commentId);
+    setShowDeleteConfirm(true);
   };
 
-  // Function to check if current user owns the comment
+
+  const handleConfirmDelete = () => {
+    setComments(prev =>
+      prev.filter(comment => comment.id !== commentToDelete)
+    );
+    setCommentToDelete(null);
+    setShowConfirmModal(false);
+  };
+
   const isCommentOwner = (comment) => {
     if (!user || !comment.userId) return false;
     const currentUserId = user.id || user._id;
@@ -217,7 +270,6 @@ const VideoDetail = () => {
 
   if (!video) return <div>Video not found</div>;
 
-  // Get display channel name
   const displayChannelName = video.channelName || 
     (video.channelId && video.channelId.name) || 
     "Unknown Channel";
@@ -229,14 +281,25 @@ const VideoDetail = () => {
         <div className="lg:col-span-2">
           {/* Video Player */}
           <div className="bg-black rounded-lg overflow-hidden mb-4">
-            <iframe
-              src={video.videoUrl}
-              title={video.title}
-              className="w-full h-64 md:h-96"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            {isYouTubeUrl(video.videoUrl) ? (
+              <iframe
+                src={getEmbedUrl(video.videoUrl)}
+                title={video.title}
+                className="w-full h-64 md:h-96"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={getLocalVideoUrl(video)}
+                controls
+                className="w-full h-64 md:h-96 bg-black"
+                poster={getThumbnailUrl(video)}
+              >
+                Sorry, your browser doesn't support embedded videos.
+              </video>
+            )}
           </div>
 
           <h1 className="text-xl font-bold mb-2">{video.title}</h1>
@@ -245,10 +308,10 @@ const VideoDetail = () => {
             <div className="text-gray-600">
               {video.views?.toLocaleString()} views • {new Date(video.uploadDate).toLocaleDateString()}
             </div>
-            <div className="flex items-center space-x-4 overflow-scroll">
+            <div className="flex items-center space-x-4 overflow-scroll hide-scrollbar">
               <button
                 onClick={handleLike}
-                className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+                className={`flex items-center space-x-2 px-3 py-1 rounded-full cursor-pointer ${
                   userLiked ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
@@ -257,22 +320,22 @@ const VideoDetail = () => {
               </button>
               <button
                 onClick={handleDislike}
-                className={`flex items-center space-x-2 px-3 py-1 rounded-full ${
+                className={`flex items-center space-x-2 px-3 py-1 rounded-full cursor-pointer ${
                   userDisliked ? 'bg-red-100 text-red-600' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
                 <FaThumbsDown />
                 <span>{dislikeCount.toLocaleString()}</span>
               </button>
-              <button className="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200">
+              <button className="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer">
                 <FaShare />
                 <span>Share</span>
               </button>
-              <button className="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200">
+              <button className="flex items-center space-x-2 px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer">
                 <FaDownload />
                 <span>Download</span>
               </button>
-              <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200">
+              <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 cursor-pointer">
                 <FaEllipsisH />
               </button>
             </div>
@@ -280,12 +343,14 @@ const VideoDetail = () => {
 
           {/* Channel info */}
           <div className="flex items-start space-x-3 mb-4">
-            <FaUserCircle className="text-4xl text-gray-400" />
+            <FaUserCircle className={`text-2xl ${avatarColor}`} />
             <div className="flex-1">
               <h3 className="font-bold">{displayChannelName}</h3>
-              <p className="text-gray-600 text-sm">1.2K subscribers</p>
+              <p className="text-gray-600 text-sm">
+                {subCount.toLocaleString()} subscribers   {/* ← replaced */}
+              </p>
             </div>
-            <button className="bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700">
+            <button className="bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 cursor-pointer">
               Subscribe
             </button>
           </div>
@@ -309,10 +374,9 @@ const VideoDetail = () => {
           <div>
             <h3 className="font-bold text-lg mb-4">{comments.length} Comments</h3>
             
-            {user && (
               <form onSubmit={handleAddComment} className="mb-6">
                 <div className="flex space-x-3">
-                  <FaUserCircle className="text-3xl text-gray-400" />
+                  <FaUserCircle className={`text-2xl ${avatarColor}`} />
                   <div className="flex-1">
                     <input
                       type="text"
@@ -340,12 +404,12 @@ const VideoDetail = () => {
                   </div>
                 </div>
               </form>
-            )}
+            
 
             <div className="space-y-4">
               {comments.map((c) => (
                 <div key={c.id} className="flex space-x-3">
-                  <FaUserCircle className="text-2xl text-gray-400" />
+                <FaUserCircle className={`text-2xl ${avatarColor}`} />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -353,7 +417,6 @@ const VideoDetail = () => {
                         <span className="text-gray-500 text-sm">{c.timestamp}</span>
                       </div>
                       
-                      {/* Edit/Delete buttons for comment owner */}
                       {isCommentOwner(c) && (
                         <div className="flex items-center space-x-2">
                           <button
@@ -374,7 +437,6 @@ const VideoDetail = () => {
                       )}
                     </div>
                     
-                    {/* Comment text or edit input */}
                     {editingCommentId === c.id ? (
                       <div className="mt-2">
                         <input
@@ -427,6 +489,35 @@ const VideoDetail = () => {
           </div>
         </div>
       </div>
+      <NotificationAlert
+        isOpen={showDeleteConfirm}
+        type="confirm"
+        message="Are you sure you want to delete this comment?"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          setComments(prev => prev.filter(c => c.id !== deleteCommentId));
+          setShowDeleteConfirm(false);
+        }}
+      />
+
+      <NotificationAlert
+        isOpen={showAuthPrompt}
+        type="auth"
+        message="Want to Engage? Sign in to continue"
+        onCancel={() => setShowAuthPrompt(false)}
+        onConfirm={() => {
+          navigate("/login");
+          setShowAuthPrompt(false);
+        }}
+      />
+
+      <NotificationAlert
+        isOpen={showAlert.open}
+        type="alert"
+        message={showAlert.message}
+        onConfirm={() => setShowAlert({ open: false, message: "" })}
+      />
+
     </div>
   );
 };

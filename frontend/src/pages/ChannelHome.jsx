@@ -5,6 +5,7 @@ import axios from "../utils/axios.js";
 import { generateRandomDuration } from "../utils/channelUtils.js";
 import ChannelHeader from "../components/ChannelHeader.jsx";
 
+
 const ChannelHome = () => {
   const { username } = useParams();
   const { user } = useAuth();
@@ -15,6 +16,8 @@ const ChannelHome = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [error, setError] = useState(null);
+
+  const BASE_URL = import.meta.env.VITE_API_URL 
 
   useEffect(() => {
     if (!user) {
@@ -156,13 +159,13 @@ const ChannelHome = () => {
             <div>
               <h3 className="text-xl font-bold mb-4">Latest upload</h3>
               <div className="flex flex-col lg:flex-row gap-6">
-                <div className="w-full lg:w-2/3">
+                <div className="w-full lg:w-1/2">
                   <Link to={`/video/${videos[0]._id}`}>
                     <div className="relative pb-[56.25%] cursor-pointer group">
                       <img
-                        src={videos[0].thumbnailUrl}
+                        src={`${BASE_URL}/${videos[0].thumbnailUrl}`}
                         alt="Latest video"
-                        className="absolute inset-0 w-full h-full rounded-xl object-cover group-hover:scale-105 transition-transform"
+                        className="absolute inset-0 w-full h-full p-5 rounded-xl object-cover group-hover:scale-105 transition-transform"
                       />
                       <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
                         {generateRandomDuration()}
@@ -193,7 +196,7 @@ const ChannelHome = () => {
                     <Link to={`/video/${video._id}`}>
                       <div className="relative pb-[56.25%] cursor-pointer group">
                         <img
-                          src={video.thumbnailUrl}
+                          src={`${BASE_URL}/${video.thumbnailUrl}`}
                           alt={video.title}
                           className="absolute inset-0 w-full h-full rounded-lg object-cover group-hover:scale-105 transition-transform"
                         />

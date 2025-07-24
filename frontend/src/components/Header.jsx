@@ -117,11 +117,10 @@ useEffect(() => {
   return (
     <header className="flex items-center justify-between border-b px-2 py-2 sticky top-0 z-50 w-full bg-white/70 backdrop-blur-md">
       {/* Mobile Search */}
-      <div className={`flex items-center w-full ${showMobileSearch ? "sm:hidden" : "hidden"}`}>
-        <button onClick={() => setShowMobileSearch(false)} className="mr-2 text-lg">
+<div className={`flex items-center w-full ${showMobileSearch ? "sm:hidden" : "hidden"} bg-white`} style={{ zIndex: 60, position: "relative" }}>        <button onClick={() => setShowMobileSearch(false)} className="mr-2 text-lg">
           <FaArrowLeft />
         </button>
-        <form onSubmit={handleSearchSubmit} className="flex flex-1 bg-white">
+        <form onSubmit={handleSearchSubmit} className="flex flex-1">
             <input
               type="text"
               placeholder="Search"
@@ -234,7 +233,7 @@ useEffect(() => {
                     <button
                       onClick={async () => {
                         setShowCreateMenu(false);
-                        await handleCreateClick(); // ✅ REUSE function
+                        await handleCreateClick(); // 
                       }}
                       className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 hover:rounded-xl cursor-pointer"
                     >
@@ -284,13 +283,13 @@ useEffect(() => {
                   <hr className="my-1" />
                   <button
                     onClick={handleViewChannelClick}
-                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded"
+                    className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded cursor-pointer"
                   >
                     Your channel
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded"
+                    className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded cursor-pointer"
                   >
                     <FaSignOutAlt />
                     Sign out

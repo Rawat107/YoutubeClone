@@ -269,7 +269,7 @@ const VideoUpload = () => {
       
       // Redirect to video page after successful upload
       setTimeout(() => {
-        navigate(`/video/${response.data.videoId}`);
+        navigate(`/video/${response.data.video.id}`);
       }, 2000);
 
     } catch (error) {

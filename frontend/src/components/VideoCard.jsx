@@ -1,6 +1,15 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 
+const BASE_URL = import.meta.env.VITE_API_URL
+
+const getThumbnailUrl = video => {
+  if (!video?.thumbnailUrl) return "";
+  if (video.thumbnailUrl.startsWith("http")) return video.thumbnailUrl;
+  const fileName = video.thumbnailUrl.split("\\").pop().split("/").pop();
+  return `${BASE_URL}/uploads/thumbnails/${fileName}`;
+};
+
 const VideoCard = ({ video, showChannel = true }) => {
   // Static duration based on video ID
   const staticDuration = useMemo(() => {
@@ -16,43 +25,34 @@ const VideoCard = ({ video, showChannel = true }) => {
   }, [video._id, video.videoId]);
 
   // Get display channel name (works for both sample and real data)
-  const displayChannelName = video.channelName || 
-    (video.channelId && video.channelId.name) || 
+  const displayChannelName =
+    video.channelName ||
+    (video.channelId && video.channelId.name) ||
     "Unknown Channel";
 
   return (
-    <Link to={`/video/${video._id}`} className="block w-full">
-      <div className="cursor-pointer group w-full">
-        {/* Video thumbnail with static duration */}
-        <div className="relative w-full bg-gray-200 rounded-xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
-          <img
-            src={video.thumbnailUrl}
-            alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-          {/* Duration overlay */}
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded-md font-medium">
-            {staticDuration}
-          </div>
-        </div>
-        
-        {/* Video info */}
-        <div className="mt-3 w-full">
-          <h3 className="text-sm font-semibold text-gray-900 leading-5 mb-1" style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
-          }}>
+    <Link to={`/video/${video._id}`} className="block max-w-full hover:shadow-md ">
+      <div className="relative w-full aspect-video rounded overflow-hidden">
+        <img
+          src={getThumbnailUrl(video)}
+          alt={video.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform "
+        />
+        {/* duration badge */}
+        <span className="absolute bottom-1 right-1 bg-gray-900 text-white text-xs px-1 py-0.5 rounded">
+          {staticDuration}
+        </span>
+      </div>
+
+      <div className="mt-2 flex gap-2">
+        <div className="flex-1">
+          <h4 className="font-medium leading-snug line-clamp-2">
             {video.title}
-          </h3>
+          </h4>
           {showChannel && (
-            <p className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
-              {displayChannelName}
-            </p>
+            <p className="text-xs text-gray-600">{displayChannelName}</p>
           )}
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-600">
             {video.views?.toLocaleString()} views • {new Date(video.uploadDate).toLocaleDateString()}
           </p>
         </div>

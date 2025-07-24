@@ -30,7 +30,6 @@ function Register() {
     try {
       const res = await axios.post("/register", formData);
       
-      // Auto-login after successful registration
       if (res.data.token) {
         login(res.data.user, res.data.token);
         navigate("/");
@@ -52,17 +51,25 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
+        <div className="text-center">
+          <img
+            src="https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/youtubelogo.svg"
+            alt="YouTube"
+            className="h-8 mx-auto mb-4"
+          />
+          <h2 className="text-3xl font-bold text-gray-900">
             Create your account
           </h2>
+          <p className="mt-2 text-gray-600">
+            Join millions of creators on YouTube
+          </p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {message && (
-            <div className={`border px-4 py-3 rounded ${
+            <div className={`border px-4 py-3 rounded-lg ${
               message.includes("successful") 
                 ? "bg-green-50 border-green-200 text-green-700"
                 : "bg-red-50 border-red-200 text-red-700"
@@ -71,9 +78,9 @@ function Register() {
             </div>
           )}
           
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="sr-only">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Username
               </label>
               <input
@@ -81,8 +88,8 @@ function Register() {
                 name="username"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
+                placeholder="Choose a username"
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -92,7 +99,7 @@ function Register() {
             </div>
             
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
@@ -100,8 +107,8 @@ function Register() {
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
               />
@@ -111,7 +118,7 @@ function Register() {
             </div>
             
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
@@ -119,33 +126,47 @@ function Register() {
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={handleChange}
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
+              <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters long</p>
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? "Creating account..." : "Register"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+          >
+            {loading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Creating account...
+              </div>
+            ) : (
+              "Create Account"
+            )}
+          </button>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link to="/login" className="font-medium text-red-600 hover:text-red-500">
                 Sign in
               </Link>
+            </p>
+          </div>
+
+          <div className="text-center pt-4 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
+              By creating an account, you agree to YouTube's{" "}
+              <a href="#" className="text-red-600 hover:text-red-500">Terms of Service</a> and{" "}
+              <a href="#" className="text-red-600 hover:text-red-500">Privacy Policy</a>
             </p>
           </div>
         </form>

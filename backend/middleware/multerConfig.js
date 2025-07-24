@@ -1,4 +1,5 @@
 // middleware/multerConfig.js
+
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -29,8 +30,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
+    
+    if (file.fieldname === 'video') {
+      const extension = path.extname(file.originalname);
+      cb(null, `video-${uniqueSuffix}${extension}`);
+    } else if (file.fieldname === 'thumbnail') {
+      // Force JPG extension for thumbnails regardless of original format
+      cb(null, `thumbnail-${uniqueSuffix}.jpg`);
+    }
   }
 });
 
@@ -60,10 +67,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: {
-      video: 100 * 1024 * 1024, // 100MB for videos
-      thumbnail: 5 * 1024 * 1024 // 5MB for thumbnails
-    }
+    fileSize: 500 * 1024 * 1024, // 500MB for videos
   },
   onError: (err, next) => {
     console.error('Multer error:', err);
@@ -81,17 +85,20 @@ const uploadWithLimits = (req, res, next) => {
   uploadFields(req, res, (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ 
-          error: 'File too large. Videos must be under 100MB, thumbnails under 5MB.' 
+        return res.status(400).json({
+          error: 'File too large. Videos must be under 500MB, thumbnails under 5MB.'
         });
       }
+
       if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-        return res.status(400).json({ 
-          error: 'Unexpected file field. Only video and thumbnail files are allowed.' 
+        return res.status(400).json({
+          error: 'Unexpected file field. Only video and thumbnail files are allowed.'
         });
       }
+
       return res.status(400).json({ error: err.message });
     }
+
     next();
   });
 };

@@ -16,6 +16,7 @@ import {
   FaBolt,
   FaPlay,
 } from "react-icons/fa";
+import { FaGithub, FaXTwitter, FaLinkedin } from "react-icons/fa6"
 
 const Divider = () => <hr className="my-3 border-gray-300" />;
 
@@ -88,6 +89,47 @@ const Sidebar = ({ isOpen, onClose }) => {
           <SidebarItem to="/" label="Music" icon={<FaMusic />} onClick={onClose}/>
           <SidebarItem to="/" label="Movies" icon={<FaFilm />} onClick={onClose}/>
           <SidebarItem to="/" label="Live" icon={<FaBroadcastTower />} onClick={onClose}/>
+          
+          <Divider />
+
+          {/* Footer Links Section */}
+        <div className="mt-auto text-[11px] text-gray-500 px-1 pb-4">
+          <div className="flex flex-wrap gap-x-2 gap-y-1">
+            <span>About</span>
+            <span>Press</span>
+            <span>Copyright</span>
+            <span>Contact us</span>
+            <span>Creators</span>
+            <span>Advertise</span>
+            <span>Developers</span>
+          </div>
+          <div className="flex flex-wrap gap-x-2 gap-y-1 mt-2">
+            <span>Terms</span>
+            <span>Privacy</span>
+            <span>Policy & Safety</span>
+            <span>How YouTube works</span>
+            <span>Test new features</span>
+          </div>
+
+          {/* Social links */}
+          <div className="flex items-center gap-4 mt-4 text-lg">
+            <a href="https://github.com/Rawat107" target="_blank" rel="noopener noreferrer" className="hover:text-black">
+              <FaGithub/>
+            </a>
+            <a href="https://x.com/vaibhavrawat495" target="_blank" rel="noopener noreferrer" className="hover:text-black">
+              <FaXTwitter/>
+            </a>
+            <a href="https://www.linkedin.com/in/vr107/" target="_blank" rel="noopener noreferrer" className="hover:text-black">
+              <FaLinkedin />
+            </a>
+          </div>
+
+          {/* Copyright */}
+          <p className="mt-3">&copy; 2025 <strong>YouTubeClone</strong> by Vaibhav Rawat</p>
+        </div>
+
+
+
         </nav>
       </aside>
     </>

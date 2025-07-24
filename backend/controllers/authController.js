@@ -90,3 +90,36 @@ export const loginUser = async (req, res, next) => {
     next(err);
   }
 };
+
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email: email.toLowerCase() }).lean();
+
+  if (!user)
+    return res
+      .status(404)
+      .json({ ok: false, message: "No user found with that e-mail." });
+
+  // You could mail a token here – for now we just hand the _id back.
+  res.json({ ok: true, userId: user._id });
+};
+
+// ➋  set the new password for that _id
+export const resetPassword = async (req, res) => {
+  const { userId } = req.params;
+  const { password } = req.body;
+
+  if (!password || password.length < 6)
+    return res
+      .status(400)
+      .json({ ok: false, message: "Password must be at least 6 characters." });
+
+  const user = await User.findById(userId);
+  if (!user)
+    return res.status(404).json({ ok: false, message: "User not found." });
+
+  user.password = password; // hash if you later add bcrypt
+  await user.save();
+
+  res.json({ ok: true, message: "Password reset successful." });
+};

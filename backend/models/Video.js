@@ -37,6 +37,12 @@ const videoSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // Track upload method to handle video playback correctly
+    uploadMethod: {
+      type: String,
+      enum: ['file', 'url'],
+      default: 'file'
+    },
     // For user-uploaded videos
     channelId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -57,15 +63,23 @@ const videoSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment',
-      },
-    ],
+    visibility: {
+      type: String,
+      enum: ['public', 'unlisted', 'private'],
+      default: 'public'
+    },
+    tags: [{
+      type: String,
+      trim: true
+    }],
+    comments: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment',
+    }],
   },
   { timestamps: true }
 );
 
 const Video = mongoose.model('Video', videoSchema);
+
 export default Video;

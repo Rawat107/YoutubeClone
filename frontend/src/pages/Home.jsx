@@ -48,7 +48,7 @@ const Home = () => {
       <div
         className="sticky top-[49px] sm:top-[50px] z-4 px-4 sm:px-6 w-full max-w-full overflow-x-hidden min-[340px]:px-[0.75rem] max-[639px]:max-w-[100vw] bg-white/70 backdrop-blur-md backdrop-saturate-150"
       >
-        <div className="flex gap-2 pt-1 sm:pb-2 sm:pt-2 overflow-x-auto hide-scrollbar min-[340px]:gap-[0.375rem] ">
+        <div className="flex gap-2 py-1 sm:pb-2 sm:pt-2 overflow-x-auto hide-scrollbar min-[340px]:gap-[0.375rem] ">
           {categories.map((category) => (
             <button
               key={category}
