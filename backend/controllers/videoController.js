@@ -49,7 +49,7 @@ export const uploadVideo = async (req, res) => {
       tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
       visibility: visibility || 'public',
       userId: req.user._id,
-      channelId: channel._id, // Use actual channel ID
+      channelId: channel._id,
     });
 
     await video.save();
@@ -86,8 +86,6 @@ export const getAllVideos = async (req, res) => {
     const { category, search, limit = 20, page = 1 } = req.query;
     let query = {};
 
-    // For user-uploaded videos, only show public ones
-    // For sample videos, show all (they don't have visibility field)
     query.$or = [
       { isSampleData: true }, // Include all sample videos
       { isSampleData: { $ne: true }, visibility: 'public' } // Include only public user videos

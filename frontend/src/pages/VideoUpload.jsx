@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../utils/axios';
-import { FaCloudUploadAlt, FaVideo, FaImage, FaSpinner, FaCheckCircle, FaTimesCircle, FaEye, FaLock, FaLink, FaTrash } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaVideo, FaImage, FaSpinner, FaCheckCircle, FaTimesCircle, FaEye, FaLock, FaTrash, FaLink } from 'react-icons/fa';
 
 const VideoUpload = () => {
   const [file, setFile] = useState(null);
@@ -19,11 +19,9 @@ const VideoUpload = () => {
   const [customThumbnail, setCustomThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [useCustomThumbnail, setUseCustomThumbnail] = useState(false);
-  const [videoUrl, setVideoUrl] = useState('');
-  const [uploadMethod, setUploadMethod] = useState('file'); // 'file' or 'url'
   const [errors, setErrors] = useState({});
   const [dragActive, setDragActive] = useState(false);
-  
+
   const fileInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
   const { user } = useAuth();
@@ -61,7 +59,7 @@ const VideoUpload = () => {
 
   const handleFileSelect = (selectedFile) => {
     setErrors({});
-    
+
     // Validate file type
     if (!selectedFile.type.startsWith('video/')) {
       setErrors({ file: 'Please select a video file' });
@@ -75,8 +73,7 @@ const VideoUpload = () => {
     }
 
     setFile(selectedFile);
-    setUploadMethod('file');
-    
+
     // Auto-generate title from filename if empty
     if (!videoData.title) {
       const filename = selectedFile.name.replace(/\.[^/.]+$/, '');
@@ -99,7 +96,7 @@ const VideoUpload = () => {
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(video, 0, 0);
-      
+
       canvas.toBlob((blob) => {
         setThumbnail(blob);
         if (!useCustomThumbnail) {
@@ -129,45 +126,13 @@ const VideoUpload = () => {
 
     setCustomThumbnail(file);
     setUseCustomThumbnail(true);
-    
+
     const url = URL.createObjectURL(file);
     setThumbnailPreview(url);
-    
+
     // Clear thumbnail error
     if (errors.thumbnail) {
       setErrors(prev => ({ ...prev, thumbnail: '' }));
-    }
-  };
-
-  const handleUrlSubmit = () => {
-    setErrors({});
-    
-    if (!videoUrl.trim()) {
-      setErrors({ url: 'Please enter a video URL' });
-      return;
-    }
-
-    // Basic YouTube URL validation
-    const youtubeRegex = /^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
-    if (!youtubeRegex.test(videoUrl)) {
-      setErrors({ url: 'Please enter a valid YouTube URL' });
-      return;
-    }
-
-    setUploadMethod('url');
-    setFile(null);
-    
-    // Extract video ID and generate embed URL
-    let videoId = '';
-    if (videoUrl.includes('youtu.be/')) {
-      videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-    } else if (videoUrl.includes('youtube.com/watch?v=')) {
-      videoId = videoUrl.split('v=')[1].split('&')[0];
-    }
-    
-    if (videoId) {
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-      setThumbnailPreview(thumbnailUrl);
     }
   };
 
@@ -192,7 +157,7 @@ const VideoUpload = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setVideoData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -201,23 +166,21 @@ const VideoUpload = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
-    if (uploadMethod === 'file' && !file) {
+
+    if (!file) {
       newErrors.file = 'Please select a video file';
-    } else if (uploadMethod === 'url' && !videoUrl.trim()) {
-      newErrors.url = 'Please enter a video URL';
     }
-    
+
     if (!videoData.title.trim()) {
       newErrors.title = 'Title is required';
     } else if (videoData.title.length > 100) {
       newErrors.title = 'Title must be less than 100 characters';
     }
-    
+
     if (videoData.description.length > 5000) {
       newErrors.description = 'Description must be less than 5000 characters';
     }
-    
+
     return newErrors;
   };
 
@@ -234,24 +197,18 @@ const VideoUpload = () => {
 
     try {
       const formData = new FormData();
-      
-      if (uploadMethod === 'file') {
-        formData.append('video', file);
-      } else {
-        formData.append('videoUrl', videoUrl);
-      }
-      
+
+      formData.append('video', file);
       formData.append('title', videoData.title);
       formData.append('description', videoData.description);
       formData.append('category', videoData.category);
       formData.append('tags', videoData.tags);
       formData.append('visibility', videoData.visibility);
-      formData.append('uploadMethod', uploadMethod);
 
       // Add appropriate thumbnail
       if (useCustomThumbnail && customThumbnail) {
         formData.append('thumbnail', customThumbnail);
-      } else if (thumbnail && uploadMethod === 'file') {
+      } else if (thumbnail) {
         formData.append('thumbnail', thumbnail);
       }
 
@@ -266,7 +223,7 @@ const VideoUpload = () => {
       });
 
       setUploadStatus('success');
-      
+
       // Redirect to video page after successful upload
       setTimeout(() => {
         navigate(`/video/${response.data.video.id}`);
@@ -283,9 +240,7 @@ const VideoUpload = () => {
     setThumbnail(null);
     setCustomThumbnail(null);
     setThumbnailPreview(null);
-    setVideoUrl('');
     setUseCustomThumbnail(false);
-    setUploadMethod('file');
     setUploadProgress(0);
     setUploadStatus('idle');
     setErrors({});
@@ -316,93 +271,39 @@ const VideoUpload = () => {
 
       {uploadStatus === 'idle' && (
         <div className="space-y-8">
-          {/* Upload Method Selection */}
-          <div className="flex justify-center mb-6">
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setUploadMethod('file')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  uploadMethod === 'file' 
-                    ? 'bg-white text-red-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Upload File
-              </button>
-              <button
-                onClick={() => setUploadMethod('url')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  uploadMethod === 'url' 
-                    ? 'bg-white text-red-600 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Video URL
-              </button>
+          {/* File Upload Section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-red-400 transition-colors">
+            <div
+              className={`${dragActive ? 'border-red-400 bg-red-50' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <FaCloudUploadAlt className="mx-auto text-5xl text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <p className="text-xl text-gray-600">
+                  Drag & drop your video here, or{' '}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-red-600 hover:text-red-700 font-medium"
+                  >
+                    browse files
+                  </button>
+                </p>
+                <p className="text-sm text-gray-500">
+                  Supported formats: MP4, AVI, MOV, WMV • Max size: 500MB
+                </p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*"
+                onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])}
+                className="hidden"
+              />
             </div>
           </div>
-
-          {/* File Upload Section */}
-          {uploadMethod === 'file' && (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-red-400 transition-colors">
-              <div
-                className={`${dragActive ? 'border-red-400 bg-red-50' : ''}`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <FaCloudUploadAlt className="mx-auto text-5xl text-gray-400 mb-4" />
-                <div className="space-y-2">
-                  <p className="text-xl text-gray-600">
-                    Drag & drop your video here, or{' '}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-red-600 hover:text-red-700 font-medium"
-                    >
-                      browse files
-                    </button>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Supported formats: MP4, AVI, MOV, WMV • Max size: 500MB
-                  </p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) => e.target.files[0] && handleFileSelect(e.target.files[0])}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* URL Input Section */}
-          {uploadMethod === 'url' && (
-            <div className="border rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Enter Video URL</h3>
-              <div className="flex gap-3">
-                <input
-                  type="url"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={handleUrlSubmit}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                >
-                  Add URL
-                </button>
-              </div>
-              {errors.url && (
-                <p className="mt-2 text-sm text-red-600">{errors.url}</p>
-              )}
-            </div>
-          )}
 
           {errors.file && (
             <div className="rounded-md bg-red-50 p-4">
@@ -434,10 +335,10 @@ const VideoUpload = () => {
           )}
 
           {/* Thumbnail Section */}
-          {(file || (uploadMethod === 'url' && videoUrl)) && (
+          {file && (
             <div className="border rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Thumbnail</h3>
-              
+
               <div className="flex gap-4 mb-4">
                 <button
                   onClick={switchToAutoThumbnail}
@@ -451,7 +352,7 @@ const VideoUpload = () => {
                 </button>
                 <button
                   onClick={() => thumbnailInputRef.current?.click()}
-                  className={`px-4 py-2 text-sm font-medium rounded-md border ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md border cursor-pointer ${
                     useCustomThumbnail
                       ? 'bg-red-50 border-red-300 text-red-700'
                       : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -492,7 +393,7 @@ const VideoUpload = () => {
           )}
 
           {/* Video Details Form */}
-          {(file || (uploadMethod === 'url' && videoUrl)) && (
+          {file && (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Title */}
@@ -605,13 +506,13 @@ const VideoUpload = () => {
                 <button
                   type="button"
                   onClick={resetUpload}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium"
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium cursor-pointer " 
                 >
                   Upload Video
                 </button>
@@ -627,7 +528,7 @@ const VideoUpload = () => {
           <FaSpinner className="animate-spin mx-auto text-4xl text-red-600 mb-4" />
           <h2 className="text-xl font-medium text-gray-900 mb-2">Uploading your video</h2>
           <p className="text-gray-600 mb-6">Please don't close this page</p>
-          
+
           <div className="max-w-xs mx-auto">
             <div className="bg-gray-200 rounded-full h-2 mb-2">
               <div 

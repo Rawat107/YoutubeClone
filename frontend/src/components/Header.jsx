@@ -77,6 +77,7 @@ useEffect(() => {
         duration: 3000
       });
       setTimeout(() => {
+        setNotification(null)
         navigate(`/channel/${response.data.channel.username}`);
       }, 1500);
     } catch (error) {
@@ -117,7 +118,7 @@ useEffect(() => {
   return (
     <header className="flex items-center justify-between border-b px-2 py-2 sticky top-0 z-50 w-full bg-white/70 backdrop-blur-md">
       {/* Mobile Search */}
-<div className={`flex items-center w-full ${showMobileSearch ? "sm:hidden" : "hidden"} bg-white`} style={{ zIndex: 60, position: "relative" }}>        <button onClick={() => setShowMobileSearch(false)} className="mr-2 text-lg">
+      <div className={`flex items-center w-full ${showMobileSearch ? "sm:hidden" : "hidden"} bg-white`} style={{ zIndex: 60, position: "relative" }}>        <button onClick={() => setShowMobileSearch(false)} className="mr-2 text-lg">
           <FaArrowLeft />
         </button>
         <form onSubmit={handleSearchSubmit} className="flex flex-1">

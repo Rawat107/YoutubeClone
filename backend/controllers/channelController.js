@@ -2,33 +2,32 @@ import Channel from '../models/Channel.js';
 import User from '../models/User.js';
 import Video from '../models/Video.js';
 
+// Create a new channel for the logged-in user
 export const createChannel = async (req, res, next) => {
   try {
-    const { name, username, description } = req.body;
+    const { name, username, description, banner } = req.body;
     const userId = req.user._id;
-    
-    // Handle banner upload if present
-    let bannerUrl = '';
-    if (req.file) {
-      // If using multer for file upload
-      bannerUrl = `/uploads/banners/${req.file.filename}`;
-    }
 
+    //Validating Input field
     const errors = {};
     if (!name || name.trim().length < 3) {
       errors.name = 'Channel name must be at least 3 characters';
     }
+
     if (!username || username.trim().length < 3) {
       errors.username = 'Username must be at least 3 characters';
     }
+
     if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
       errors.username = 'Username can only contain letters, numbers, and underscores';
     }
 
+    // If there are validation errors, return them
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors });
     }
 
+    // Check if user already has a channel
     const existingChannel = await Channel.findOne({ userId });
     if (existingChannel) {
       return res.status(400).json({
@@ -37,6 +36,7 @@ export const createChannel = async (req, res, next) => {
       });
     }
 
+    // Check if the username is already taken
     const existingUsername = await Channel.findOne({ username: username.toLowerCase() });
     if (existingUsername) {
       return res.status(400).json({
@@ -44,6 +44,13 @@ export const createChannel = async (req, res, next) => {
       });
     }
 
+    // Handle banner - now it's a URL string instead of file upload
+    let bannerUrl = '';
+    if (banner && banner.trim()) {
+      bannerUrl = banner.trim();
+    }
+
+    // Create and save new channel
     const channel = new Channel({
       name: name.trim(),
       username: username.toLowerCase().trim(),
@@ -54,10 +61,12 @@ export const createChannel = async (req, res, next) => {
 
     await channel.save();
 
+    // Add channel reference to the user
     await User.findByIdAndUpdate(userId, {
       $push: { channels: channel._id }
     });
 
+    // Respond with channel info
     res.status(201).json({
       message: 'Channel created successfully',
       channel: {
@@ -72,29 +81,28 @@ export const createChannel = async (req, res, next) => {
         createdAt: channel.createdAt,
       }
     });
-
   } catch (error) {
     console.error('Create channel error:', error);
     next(error);
   }
 };
 
-
+// Get the current logged-in user's channel
 export const getUserChannel = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    
-    // FIXED: Better query with proper population
+
+    // Fetch the channel and populate its videos
     const channel = await Channel.findOne({ userId })
       .populate('videos')
-      .lean(); // Use lean() for better performance
-    
+      .lean();
+
     if (!channel) {
       return res.status(404).json({ message: 'Channel not found' });
     }
 
-    // FIXED: Ensure consistent response structure
-    res.json({ 
+    // Respond with the user's channel
+    res.json({
       success: true,
       channel: {
         ...channel,
@@ -107,21 +115,23 @@ export const getUserChannel = async (req, res, next) => {
   }
 };
 
+// Get a channel by its username
 export const getChannelByUsername = async (req, res, next) => {
   try {
     const { username } = req.params;
-    
-    // FIXED: Better error handling and consistent response
+
+    // Find channel by username and populate related data
     const channel = await Channel.findOne({ username: username.toLowerCase() })
-      .populate('userId', 'username email')
-      .populate('videos')
+      .populate('userId', 'username email') // Fetch basic user info
+      .populate('videos') // Include channel's videos
       .lean();
 
     if (!channel) {
       return res.status(404).json({ message: 'Channel not found' });
     }
 
-    res.json({ 
+    // Respond with channel info
+    res.json({
       success: true,
       channel: {
         ...channel,
@@ -134,16 +144,18 @@ export const getChannelByUsername = async (req, res, next) => {
   }
 };
 
+// Get all channels in the system
 export const getAllChannels = async (req, res, next) => {
   try {
     const channels = await Channel.find()
       .populate('userId', 'username email')
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 }) // Newest channels first
       .lean();
 
-    res.json({ 
+    // Respond with list of channel
+    res.json({
       success: true,
-      channels 
+      channels
     });
   } catch (error) {
     console.error('Get all channels error:', error);
@@ -151,22 +163,26 @@ export const getAllChannels = async (req, res, next) => {
   }
 };
 
+// Update the current user's channel
 export const updateChannel = async (req, res, next) => {
   try {
     const userId = req.user._id;
     const { name, description, banner } = req.body;
 
+    // Find channel by user ID
     const channel = await Channel.findOne({ userId });
     if (!channel) {
       return res.status(404).json({ message: 'Channel not found' });
     }
 
+    // Update channel fields if provided
     if (name) channel.name = name.trim();
     if (description !== undefined) channel.description = description.trim();
     if (banner !== undefined) channel.banner = banner;
 
     await channel.save();
 
+    // Respond with updated channel info
     res.json({
       message: 'Channel updated successfully',
       success: true,
@@ -178,24 +194,32 @@ export const updateChannel = async (req, res, next) => {
   }
 };
 
+// Delete the current user's channel and its videos
 export const deleteChannel = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const channel = await Channel.findOne({ userId });
 
+    // Find the user's channel
+    const channel = await Channel.findOne({ userId });
     if (!channel) {
       return res.status(404).json({ message: 'Channel not found' });
     }
 
+    // Delete all videos belonging to this channel
     await Video.deleteMany({ channelId: channel._id });
+
+    // Remove the channel from the user's list
     await User.findByIdAndUpdate(userId, {
       $pull: { channels: channel._id }
     });
+
+    // Delete the channel itself
     await Channel.findByIdAndDelete(channel._id);
 
-    res.json({ 
+    // Respond with success
+    res.json({
       message: 'Channel deleted successfully',
-      success: true 
+      success: true
     });
   } catch (error) {
     console.error('Delete channel error:', error);

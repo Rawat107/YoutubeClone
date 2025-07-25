@@ -11,8 +11,6 @@ const CreateChannel = () => {
     description: '',
     banner: '', // Added banner field
   });
-  const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -26,57 +24,22 @@ const CreateChannel = () => {
     }
   };
 
-  const handleBannerUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setErrors({ banner: 'Please select an image file' });
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors({ banner: 'Banner size must be less than 5MB' });
-      return;
-    }
-
-    setBannerFile(file);
-    const url = URL.createObjectURL(file);
-    setBannerPreview(url);
-    setFormData(prev => ({ ...prev, banner: url }));
-    
-    // Clear banner error
-    if (errors.banner) {
-      setErrors(prev => ({ ...prev, banner: '' }));
-    }
-  };
-
-  const removeBanner = () => {
-    setBannerFile(null);
-    setBannerPreview('');
-    setFormData(prev => ({ ...prev, banner: '' }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    console.log("Submitting form:", formData);
 
     try {
-      const submitData = new FormData();
-      submitData.append('name', formData.name);
-      submitData.append('username', formData.username);
-      submitData.append('description', formData.description);
-      
-      if (bannerFile) {
-        submitData.append('banner', bannerFile);
-      }
-
-      const response = await axios.post('/channels', submitData, {
+      // Send JSON data instead of FormData
+      const response = await axios.post('/channels', {
+        name: formData.name,
+        username: formData.username,
+        description: formData.description,
+        banner: formData.banner, // now it's just a URL string
+      }, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       });
       
@@ -191,48 +154,40 @@ const CreateChannel = () => {
 
             {/* NEW: Banner Upload Section */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Channel Banner
+              <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-2">
+                Channel Banner URL <span className="text-gray-400 text-xs">(optional)</span>
               </label>
-              
-              {!bannerPreview ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <FaImage className="mx-auto text-3xl text-gray-400 mb-2" />
-                  <div className="space-y-1">
-                    <label htmlFor="banner-upload" className="cursor-pointer">
-                      <span className="text-indigo-600 hover:text-indigo-500 font-medium">
-                        Upload a banner
-                      </span>
-                      <input
-                        id="banner-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBannerUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500">
-                      Recommended: 2560 x 1440 pixels • Max: 5MB
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative">
+
+              <input
+                id="banner"
+                name="banner"
+                type="text"
+                value={formData.banner}
+                onChange={handleChange}
+                placeholder="Paste image URL (e.g. https://...)"
+                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              />
+
+              {/* Preview if URL is present */}
+              {formData.banner && (
+                <div className="relative mt-4">
                   <img
-                    src={bannerPreview}
+                    src={formData.banner}
                     alt="Banner preview"
                     className="w-full h-24 object-cover rounded-lg border"
                   />
                   <button
                     type="button"
-                    onClick={removeBanner}
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, banner: '' }))
+                    }
                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                   >
                     <FaTrash className="text-xs" />
                   </button>
                 </div>
               )}
-              
+
               {errors.banner && (
                 <p className="mt-2 text-sm text-red-600">{errors.banner}</p>
               )}
@@ -242,14 +197,14 @@ const CreateChannel = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
               >
                 {loading ? 'Creating...' : 'Create Channel'}
               </button>

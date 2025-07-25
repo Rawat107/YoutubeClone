@@ -1,21 +1,21 @@
-// controllers/authController.js
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-// Token generator
+// Function to generate JWT token with user ID and username
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id, username: user.username },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" } // Token expires in 7d
   );
 };
 
-// Register User
+// Handle user registration
 export const registerUser = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
+    // Basic input validation
     const errors = {};
     if (!username) errors.username = "Username is required";
     if (!email) errors.email = "Email is required";
@@ -23,10 +23,12 @@ export const registerUser = async (req, res, next) => {
     else if (password.length < 6)
       errors.password = "Password must be at least 6 characters";
 
+    // If there are validation errors, send them back
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors });
     }
 
+    // Check if email or username already exists
     const exists = await User.findOne({ $or: [{ email }, { username }] });
     if (exists) {
       return res.status(400).json({
@@ -37,19 +39,23 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    // Create and save new user
     const user = await User.create({ username, email, password });
 
+    // Respond with success message
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
+    // Pass any errors to the global error handler
     next(err);
   }
 };
 
-// Login User
+// Handle user login
 export const loginUser = async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
 
+    // Basic input validation
     const errors = {};
     if (!email && !username)
       errors.identifier = "Email or username is required";
@@ -57,10 +63,12 @@ export const loginUser = async (req, res, next) => {
       errors.identifier = "Use either email or username (not both)";
     if (!password) errors.password = "Password is required";
 
+    // If validation fails, return errors
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors });
     }
 
+    // Find user by email or username
     let user;
     if (email) {
       user = await User.findOne({ email });
@@ -70,12 +78,15 @@ export const loginUser = async (req, res, next) => {
       if (!user) return res.status(404).json({ error: "Username not found" });
     }
 
+    // Compare passwords (note: no hashing here, just plain check)
     if (user.password !== password) {
       return res.status(401).json({ error: "Invalid password" });
     }
 
+    // Generate JWT token
     const token = generateToken(user);
 
+    // Send user data and token
     res.status(200).json({
       message: "Login successful",
       token,
@@ -87,12 +98,17 @@ export const loginUser = async (req, res, next) => {
       },
     });
   } catch (err) {
+    // Pass any errors to the global error handler
     next(err);
   }
 };
 
+
+// Handle forgot password request
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
+
+  // Find user by email
   const user = await User.findOne({ email: email.toLowerCase() }).lean();
 
   if (!user)
@@ -100,26 +116,30 @@ export const forgotPassword = async (req, res) => {
       .status(404)
       .json({ ok: false, message: "No user found with that e-mail." });
 
-  // You could mail a token here – for now we just hand the _id back.
+  // For now this project, just returning the user ID
   res.json({ ok: true, userId: user._id });
 };
 
-// ➋  set the new password for that _id
+// Handle resetting password using userId
 export const resetPassword = async (req, res) => {
   const { userId } = req.params;
   const { password } = req.body;
 
+  // Validate new password
   if (!password || password.length < 6)
     return res
       .status(400)
       .json({ ok: false, message: "Password must be at least 6 characters." });
 
+  // Find user by ID
   const user = await User.findById(userId);
   if (!user)
     return res.status(404).json({ ok: false, message: "User not found." });
 
-  user.password = password; // hash if you later add bcrypt
+  // Update user's password 
+  user.password = password; 
   await user.save();
 
+  // Respond with success
   res.json({ ok: true, message: "Password reset successful." });
 };

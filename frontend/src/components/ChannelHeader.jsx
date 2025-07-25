@@ -103,11 +103,11 @@ const ChannelHeader = ({
         {/* OWNER BUTTONS - EXACT SAME STYLING */}
         {isOwner && (
           <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-            <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+            <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
               Customize Channel
             </button>
             <Link to={`/channel/${username}/videos`}>
-              <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+              <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
                 Manage Videos
               </button>
             </Link>
@@ -118,18 +118,18 @@ const ChannelHeader = ({
       {/* TABS - EXACT SAME STYLING */}
       <div className="mt-6 border-b border-gray-300 flex space-x-6 text-sm sm:text-base font-medium">
         <Link to={`/channel/${username}`}>
-          <button className={`pb-3 px-1 border-b-2 ${activeTab === "home" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
+          <button className={`pb-3 px-1 border-b-2  cursor-pointer ${activeTab === "home" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
             Home
           </button>
         </Link>
         {videoCount > 0 && (
           <Link to={`/channel/${username}/videos`}>
-            <button className={`pb-3 px-1 border-b-2 ${activeTab === "videos" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
+            <button className={`pb-3 px-1 border-b-2  cursor-pointer ${activeTab === "videos" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
               Videos
             </button>
           </Link>
         )}
-        <button className="pb-3 px-1 text-gray-600 hover:text-black border-b-2 border-transparent hover:border-gray-300">
+        <button className="pb-3 px-1 text-gray-600 cursor-pointer  hover:text-black border-b-2 border-transparent hover:border-gray-300">
           Posts
         </button>
       </div>

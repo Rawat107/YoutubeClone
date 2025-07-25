@@ -31,7 +31,7 @@ const VideoCard = ({ video, showChannel = true }) => {
     "Unknown Channel";
 
   return (
-    <Link to={`/video/${video._id}`} className="block max-w-full hover:shadow-md ">
+    <Link to={`/video/${video._id}`} className="block max-w-full hover:shadow-md p-1">
       <div className="relative w-full aspect-video rounded overflow-hidden">
         <img
           src={getThumbnailUrl(video)}

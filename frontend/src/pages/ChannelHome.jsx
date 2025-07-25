@@ -134,7 +134,7 @@ const ChannelHome = () => {
         activeTab="home"
       />
 
-      {/* CONTENT - EXACT SAME STYLING */}
+      {/* CONTENT  */}
       <div className="py-6">
         {videoCount === 0 ? (
           <div className="text-center text-gray-600 space-y-4 max-w-md mx-auto">
@@ -155,7 +155,7 @@ const ChannelHome = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Latest Video - EXACT SAME STYLING */}
+            {/* Latest Video */}
             <div>
               <h3 className="text-xl font-bold mb-4">Latest upload</h3>
               <div className="flex flex-col lg:flex-row gap-6">
@@ -187,8 +187,8 @@ const ChannelHome = () => {
               </div>
             </div>
 
-            {/* Uploads Grid - EXACT SAME STYLING */}
-            <div>
+            {/* Uploads Grid */}
+            {videoCount > 1 && (<div>
               <h3 className="text-xl font-bold mb-4">Uploads</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {videos.map((video, index) => (
@@ -216,7 +216,7 @@ const ChannelHome = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>)}
           </div>
         )}
       </div>
