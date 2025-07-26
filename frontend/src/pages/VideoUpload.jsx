@@ -262,7 +262,7 @@ const VideoUpload = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
+    <section className="max-w-4xl mx-auto p-6 bg-white">
       <div className="text-center mb-8">
         <FaVideo className="mx-auto text-4xl text-red-600 mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Video</h1>
@@ -272,7 +272,7 @@ const VideoUpload = () => {
       {uploadStatus === 'idle' && (
         <div className="space-y-8">
           {/* File Upload Section */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-red-400 transition-colors">
+          <section className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-red-400 transition-colors">
             <div
               className={`${dragActive ? 'border-red-400 bg-red-50' : ''}`}
               onDragEnter={handleDrag}
@@ -286,7 +286,7 @@ const VideoUpload = () => {
                   Drag & drop your video here, or{' '}
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-red-600 hover:text-red-700 font-medium"
+                    className="text-red-600 hover:text-red-700 font-medium cursor-pointer"
                   >
                     browse files
                   </button>
@@ -303,7 +303,7 @@ const VideoUpload = () => {
                 className="hidden"
               />
             </div>
-          </div>
+          </section>
 
           {errors.file && (
             <div className="rounded-md bg-red-50 p-4">
@@ -572,7 +572,7 @@ const VideoUpload = () => {
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

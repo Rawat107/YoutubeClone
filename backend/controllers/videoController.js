@@ -205,40 +205,6 @@ export const getVideosByUser = async (req, res) => {
   }
 };
 
-// Update video
-export const updateVideo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, description, category, tags, visibility } = req.body;
-
-    const video = await Video.findById(id);
-    if (!video) {
-      return res.status(404).json({ error: 'Video not found' });
-    }
-
-    if (video.userId.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Unauthorized to update this video' });
-    }
-
-    if (title) video.title = title;
-    if (description !== undefined) video.description = description;
-    if (category) video.category = category;
-    if (tags) video.tags = tags.split(',').map(tag => tag.trim());
-    if (visibility) video.visibility = visibility;
-
-    await video.save();
-
-    res.json({
-      message: 'Video updated successfully',
-      video
-    });
-
-  } catch (error) {
-    console.error('Update video error:', error);
-    res.status(500).json({ error: 'Failed to update video' });
-  }
-};
-
 // Delete video
 export const deleteVideo = async (req, res) => {
   try {

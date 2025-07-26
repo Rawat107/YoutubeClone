@@ -8,7 +8,6 @@ import {
   getAllVideos,
   getVideoById,
   getVideosByUser,
-  updateVideo,
   deleteVideo,
   toggleLike,
   toggleDislike
@@ -38,7 +37,6 @@ router.get('/videos/channel/:channelId', async (req, res) => {
 
 // Protected routes (require authentication)
 router.post('/videos/upload', authenticateToken, uploadWithLimits, uploadVideo);
-router.put('/videos/:id', authenticateToken, updateVideo);
 router.delete('/videos/:id', authenticateToken, deleteVideo);
 router.post('/videos/:id/like', authenticateToken, toggleLike);
 router.post('/videos/:id/dislike', authenticateToken, toggleDislike);

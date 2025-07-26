@@ -14,7 +14,7 @@ ensureDirectoryExists('uploads');
 ensureDirectoryExists('uploads/videos');
 ensureDirectoryExists('uploads/thumbnails');
 
-// Storage configuration
+// Storage configuration.
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === 'video') {

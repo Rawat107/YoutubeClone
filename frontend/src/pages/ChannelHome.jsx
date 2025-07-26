@@ -1,79 +1,89 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState} from "react";
 import axios from "../utils/axios.js";
-import { generateRandomDuration } from "../utils/channelUtils.js";
+import { FaTrash, FaVideo, FaPlay } from "react-icons/fa";
 import ChannelHeader from "../components/ChannelHeader.jsx";
-
+import ChannelUpdate from "../components/ChannelUpdate.jsx";
 
 const ChannelHome = () => {
   const { username } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [isManageMode, setIsManageMode] = useState(false);
   const [error, setError] = useState(null);
+  const [deletingVideo, setDeletingVideo] = useState(null);
 
-  const BASE_URL = import.meta.env.VITE_API_URL 
+  const BASE_URL = import.meta.env.VITE_API_URL;
+  const getLocalVideoUrl = (video) => {
+    if (!video?.videoUrl) return "";
+    return `${BASE_URL}/${video.videoUrl.replace(/\\/g, "/")}`;
+  };
+
+  const getThumbnailUrl = (video) => {
+    if (!video?.thumbnailUrl) return "";
+    if (video.thumbnailUrl.startsWith("http")) return video.thumbnailUrl;
+    return `${BASE_URL}/${video.thumbnailUrl.replace(/\\/g, "/")}`;
+  };
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
     const fetchChannelData = async () => {
       try {
         setError(null);
-        
         if (username) {
           const response = await axios.get(`/channels/${username}`);
-          if (response.data && response.data.channel) {
+          if (response.data?.channel) {
             setChannel(response.data.channel);
-            
-            // Fetch videos for this channel - only user-uploaded videos
             try {
-              const videosResponse = await axios.get(`/videos/channel/${response.data.channel._id}`);
+              const videosResponse = await axios.get(
+                `/videos/channel/${response.data.channel._id}`
+              );
               setVideos(videosResponse.data.videos || []);
-            } catch (videoError) {
-              console.warn('Failed to fetch videos:', videoError);
+            } catch {
               setVideos([]);
             }
           } else {
-            throw new Error('Invalid channel response structure');
+            throw new Error("Invalid channel response structure");
           }
         } else {
           try {
-            const response = await axios.get('/channels/my');
-            if (response.data && response.data.channel) {
+            const response = await axios.get("/channels/my");
+            if (response.data?.channel) {
               setChannel(response.data.channel);
-              
-              // Fetch videos for user's channel - only their uploaded videos
               try {
-                const videosResponse = await axios.get(`/videos/channel/${response.data.channel._id}`);
+                const videosResponse = await axios.get(
+                  `/videos/channel/${response.data.channel._id}`
+                );
                 setVideos(videosResponse.data.videos || []);
-              } catch (videoError) {
-                console.warn('Failed to fetch user videos:', videoError);
+              } catch {
                 setVideos([]);
               }
             } else {
-              throw new Error('Invalid my channel response structure');
+              throw new Error("Invalid my channel response structure");
             }
-          } catch (error) {
-            if (error.response?.status === 404) {
+          } catch (err) {
+            if (err.response?.status === 404) {
               setShowCreateModal(true);
               setChannel(null);
             } else {
-              throw error;
+              throw err;
             }
           }
         }
-      } catch (error) {
-        console.error('Failed to fetch channel:', error);
-        setError(error.message || 'Failed to load channel');
+      } catch (err) {
+        console.error("Failed to fetch channel:", err);
+        setError(err.message || "Failed to load channel");
         setChannel(null);
       } finally {
         setLoading(false);
@@ -83,144 +93,220 @@ const ChannelHome = () => {
     fetchChannelData();
   }, [username, user, navigate]);
 
-  const handleChannelCreated = (newChannel) => {
-    setChannel(newChannel);
-    setShowCreateModal(false);
-    navigate(`/channel/${newChannel.username}`);
+  const handleChannelUpdated = (updatedChannel) => {
+    setChannel(updatedChannel);
+    setShowUpdateModal(false);
   };
 
-  // Robust isOwner logic
+  const handleDeleteVideo = async (videoId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this video? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+    setDeletingVideo(videoId);
+    try {
+      await axios.delete(`/videos/${videoId}`);
+      setVideos((prev) => prev.filter((v) => v._id !== videoId));
+    } catch {
+      alert("Failed to delete video. Please try again.");
+    } finally {
+      setDeletingVideo(null);
+    }
+  };
+
   const isOwner = useMemo(() => {
     if (!user || !channel) return false;
-    
-    let channelUserId;
-    if (typeof channel.userId === 'object' && channel.userId._id) {
-      channelUserId = channel.userId._id.toString();
-    } else {
-      channelUserId = channel.userId.toString();
-    }
-    
-    const currentUserId = user._id ? user._id.toString() : user.id.toString();
-    return channelUserId === currentUserId;
+    let cid = typeof channel.userId === "object" && channel.userId._id
+      ? channel.userId._id
+      : channel.userId;
+    const uid = user._id || user.id;
+    return cid.toString() === uid.toString();
   }, [user, channel]);
-
-  const videoCount = videos.length;
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-gray-500">Loading channel...</div>
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-48 bg-gray-300 rounded-lg"></div>
+          <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+        </div>
       </div>
     );
   }
 
-  if (error && !showCreateModal) {
+  if (error) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Error: {error}</div>
+      <div className="max-w-6xl mx-auto p-4 text-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!channel && showCreateModal) {
+    return (
+      <div className="max-w-6xl mx-auto p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Create Your Channel</h1>
+        <p className="text-gray-600 mb-6">
+          You need to create a channel before you can view this page.
+        </p>
+        <Link
+          to="/create-channel"
+          className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700"
+        >
+          Create Channel
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="px-4 pt-4 sm:px-6">
-      {/* SHARED CHANNEL HEADER */}
-      <ChannelHeader 
+    <section className="max-w-6xl mx-auto p-4">
+      <ChannelHeader
         channel={channel}
         username={username}
         user={user}
-        videoCount={videoCount}
+        videoCount={videos.length}
         isOwner={isOwner}
         activeTab="home"
+        isManageMode={isManageMode}
+        onToggleManageMode={() => setIsManageMode(!isManageMode)}
+        onCustomizeChannel={() => setShowUpdateModal(true)}
       />
 
-      {/* CONTENT  */}
-      <div className="py-6">
-        {videoCount === 0 ? (
-          <div className="text-center text-gray-600 space-y-4 max-w-md mx-auto">
-            <img
-              src="https://www.gstatic.com/youtube/img/creator/no_content_illustration.svg"
-              alt="No content"
-              className="mx-auto w-32 sm:w-44"
-            />
-            <p className="text-lg font-semibold">Create content on any device</p>
-            <p className="text-sm">
-              Upload and record at home or on the go. Everything you make public will appear here.
+      <section className="mt-8">
+        {videos.length === 0 ? (
+          <section className="text-center py-16">
+            <FaVideo className="mx-auto text-6xl text-gray-400 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              {isOwner
+                ? "Create content on any device"
+                : "No videos uploaded yet"}
+            </h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {isOwner
+                ? "Upload and record at home or on the go. Everything you make public will appear here."
+                : "This channel hasn't uploaded any videos yet."}
             </p>
-            <Link to="/upload">
-              <button className="mt-2 px-5 py-2.5 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
-                Create
-              </button>
-            </Link>
-          </div>
+            {isOwner && (
+              <Link
+                to="/upload"
+                className="inline-block bg-red-600 text-white px-6 py-3 rounded-2xl hover:bg-red-700"
+              >
+                Create Video
+              </Link>
+            )}
+          </section>
         ) : (
-          <div className="space-y-8">
-            {/* Latest Video */}
-            <div>
-              <h3 className="text-xl font-bold mb-4">Latest upload</h3>
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="w-full lg:w-1/2">
-                  <Link to={`/video/${videos[0]._id}`}>
-                    <div className="relative pb-[56.25%] cursor-pointer group">
-                      <img
-                        src={`${BASE_URL}/${videos[0].thumbnailUrl}`}
-                        alt="Latest video"
-                        className="absolute inset-0 w-full h-full p-5 rounded-xl object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
-                        {generateRandomDuration()}
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-                <div className="w-full lg:w-1/3">
-                  <Link to={`/video/${videos[0]._id}`}>
-                    <h4 className="text-lg font-bold hover:text-blue-600 cursor-pointer">{videos[0].title}</h4>
-                  </Link>
-                  <p className="text-gray-500 mt-2">
-                    {videos[0].views} views • {new Date(videos[0].uploadDate).toLocaleDateString()}
-                  </p>
-                  <p className="mt-4 line-clamp-4">
-                    {videos[0].description || "No description available"}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <section>
+            <header className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Latest videos
+              </h2>
+            </header>
 
-            {/* Uploads Grid */}
-            {videoCount > 1 && (<div>
-              <h3 className="text-xl font-bold mb-4">Uploads</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-                {videos.map((video, index) => (
-                  <div key={video._id} className={index === 0 ? "sm:hidden" : ""}>
-                    <Link to={`/video/${video._id}`}>
-                      <div className="relative pb-[56.25%] cursor-pointer group">
-                        <img
-                          src={`${BASE_URL}/${video.thumbnailUrl}`}
-                          alt={video.title}
-                          className="absolute inset-0 w-full h-full rounded-lg object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-1 py-0.5 rounded">
-                          {generateRandomDuration()}
-                        </div>
+            {videos[0] && (
+              <article className="mb-8 bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="md:flex">
+                  <div className="md:w-1/2 relative group">
+                    <Link to={`/video/${videos[0]._id}`}>
+                      <img
+                        src={getThumbnailUrl(videos[0])}
+                        alt={videos[0].title}
+                        className="w-full h-48 md:h-64 object-cover group-hover:opacity-90 transition-opacity"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FaPlay className="text-white text-4xl" />
                       </div>
                     </Link>
-                    <div className="mt-3">
-                      <Link to={`/video/${video._id}`}>
-                        <h4 className="font-medium line-clamp-2 hover:text-blue-600 cursor-pointer">{video.title}</h4>
-                      </Link>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {video.views} views • {new Date(video.uploadDate).toLocaleDateString()}
+                    {isManageMode && isOwner && (
+                      <button
+                        onClick={() => handleDeleteVideo(videos[0]._id)}
+                        disabled={deletingVideo === videos[0]._id}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Delete video"
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="md:w-1/2 p-6">
+                    <Link to={`/video/${videos[0]._id}`}>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2 hover:text-red-600">
+                        {videos[0].title}
+                      </h3>
+                    </Link>
+                    <p className="text-sm text-gray-500 mb-2">
+                      {videos[0].views} views •{" "}
+                      {new Date(videos[0].uploadDate).toLocaleDateString()}
+                    </p>
+                    <p className="text-gray-700 line-clamp-3">
+                      {videos[0].description || "No description available"}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            {videos.length > 1 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {videos.slice(1).map((video) => (
+                  <article
+                    key={video._id}
+                    className="bg-white rounded-lg shadow-sm overflow-hidden relative group transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
+                    onClick={() => navigate(`/video/${video._id}`)}
+                  >
+                    <div className="relative">
+                      <img
+                        src={getThumbnailUrl(video)}
+                        alt={video.title}
+                        className="w-full h-32 object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <FaPlay className="text-white text-2xl" />
+                      </div>
+                    </div>
+                    {isManageMode && isOwner && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteVideo(video._id);
+                        }}
+                        disabled={deletingVideo === video._id}
+                        className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Delete video"
+                      >
+                        <FaTrash size={10} />
+                      </button>
+                    )}
+                    <div className="p-3">
+                      <h4 className="font-medium text-gray-900 text-sm line-clamp-2 hover:text-red-600">
+                        {video.title}
+                      </h4>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {video.views} views •{" "}
+                        {new Date(video.uploadDate).toLocaleDateString()}
                       </p>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
-            </div>)}
-          </div>
+            )}
+          </section>
         )}
-      </div>
-    </div>
+      </section>
+
+      {showUpdateModal && (
+        <ChannelUpdate
+          channel={channel}
+          onClose={() => setShowUpdateModal(false)}
+          onUpdate={handleChannelUpdated}
+        />
+      )}
+    </section>
   );
 };
 

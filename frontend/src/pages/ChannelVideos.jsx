@@ -2,159 +2,198 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import axios from "../utils/axios.js";
-import VideoCard from "../components/VideoCard";
+import { FaTrash, FaVideo, FaPlay } from "react-icons/fa";
 import ChannelHeader from "../components/ChannelHeader.jsx";
+import NotificationAlert from "../components/NotificationAlert.jsx";
 
 const ChannelVideos = () => {
   const { username } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState("newest");
+  const [isManageMode, setIsManageMode] = useState(false);
+  const [deletingVideo, setDeletingVideo] = useState(null);
+
+  // NotificationAlert state
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertVideoId, setAlertVideoId] = useState(null);
+
+  const BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
-
     const fetchChannelData = async () => {
       try {
         setError(null);
-        
-        const response = await axios.get(`/channels/${username}`);
-        if (response.data && response.data.channel) {
-          setChannel(response.data.channel);
-          
-          // Fetch videos for this channel - only user-uploaded videos
-          try {
-            const videosResponse = await axios.get(`/videos/channel/${response.data.channel._id}`);
-            setVideos(videosResponse.data.videos || []);
-          } catch (videoError) {
-            console.warn('Failed to fetch videos:', videoError);
-            setVideos([]);
-          }
-        } else {
-          throw new Error('Invalid channel response structure');
-        }
-      } catch (error) {
-        console.error('Failed to fetch channel:', error);
-        setError(error.message || 'Failed to load channel');
-        setChannel(null);
+        const { data: chData } = await axios.get(`/channels/${username}`);
+        setChannel(chData.channel);
+        const { data: vidData } = await axios.get(`/videos/channel/${chData.channel._id}`);
+        setVideos(vidData.videos || []);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to load channel or videos.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchChannelData();
   }, [username, user, navigate]);
 
-  // Robust isOwner logic
   const isOwner = useMemo(() => {
     if (!user || !channel) return false;
-    
-    let channelUserId;
-    if (typeof channel.userId === 'object' && channel.userId._id) {
-      channelUserId = channel.userId._id.toString();
-    } else {
-      channelUserId = channel.userId.toString();
-    }
-    
-    const currentUserId = user._id ? user._id.toString() : user.id.toString();
-    return channelUserId === currentUserId;
+    const chUserId = typeof channel.userId === "object" && channel.userId._id
+      ? channel.userId._id
+      : channel.userId;
+    const currId = user._id || user.id;
+    return chUserId.toString() === currId.toString();
   }, [user, channel]);
 
   const sortedVideos = useMemo(() => {
-    const sorted = [...videos];
-    switch (sortBy) {
-      case 'oldest':
-        return sorted.sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
-      case 'popular':
-        return sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
-      case 'newest':
-      default:
-        return sorted.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+    const arr = [...videos];
+    if (sortBy === "oldest") {
+      return arr.sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
     }
+    if (sortBy === "popular") {
+      return arr.sort((a, b) => (b.views || 0) - (a.views || 0));
+    }
+    return arr.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
   }, [videos, sortBy]);
 
-  const videoCount = videos.length;
+  const getThumbnailUrl = (video) => {
+    if (!video?.thumbnailUrl) return "";
+    return video.thumbnailUrl.startsWith("http")
+      ? video.thumbnailUrl
+      : `${BASE_URL}/${video.thumbnailUrl.replace(/\\/g, "/")}`;
+  };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-gray-500">Loading channel...</div>
-      </div>
-    );
-  }
+  const confirmDelete = (id) => {
+    setAlertVideoId(id);
+    setAlertOpen(true);
+  };
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
+  const handleConfirmDelete = async () => {
+    const id = alertVideoId;
+    setAlertOpen(false);
+    setDeletingVideo(id);
+    try {
+      await axios.delete(`/videos/${id}`);
+      setVideos((prev) => prev.filter((v) => v._id !== id));
+    } catch {
+      alert("Delete failed");
+    } finally {
+      setDeletingVideo(null);
+      setAlertVideoId(null);
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
 
   return (
-    <div className="px-4 pt-4 sm:px-6">
-      {/* SHARED CHANNEL HEADER - NO DUPLICATION */}
-      <ChannelHeader 
+    <div className="max-w-6xl mx-auto p-4">
+      <ChannelHeader
         channel={channel}
         username={username}
         user={user}
-        videoCount={videoCount}
+        videoCount={videos.length}
         isOwner={isOwner}
         activeTab="videos"
+        isManageMode={isManageMode}
+        onToggleManageMode={() => setIsManageMode(!isManageMode)}
+        onCustomizeChannel={() => navigate("/")}
       />
 
-      {/* VIDEOS CONTENT ONLY - DRY APPROACH */}
-      <div className="py-6">
-        {videoCount === 0 ? (
-          <div className="text-center text-gray-600 space-y-4 max-w-md mx-auto">
-            <img
-              src="https://www.gstatic.com/youtube/img/creator/no_content_illustration.svg"
-              alt="No content"
-              className="mx-auto w-32 sm:w-44"
-            />
-            <p className="text-lg font-semibold">
+      <section className="mt-8">
+        {videos.length === 0 ? (
+          <section className="text-center py-16">
+            <FaVideo className="mx-auto text-6xl text-gray-400 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {isOwner ? "Upload your first video" : "No videos uploaded yet"}
-            </p>
-            <p className="text-sm">
-              {isOwner 
+            </h2>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {isOwner
                 ? "Upload and record at home or on the go. Everything you make public will appear here."
-                : "This channel hasn't uploaded any videos yet."
-              }
+                : "This channel hasn't uploaded any videos yet."}
             </p>
-          </div>
+          </section>
         ) : (
-          <div className="space-y-6">
-            {/* Sort Options */}
-            <div className="flex items-center gap-4 text-sm">
-              <span className="text-gray-600">Sort by:</span>
-              <select 
+          <section>
+            <header className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Videos ({videos.length})</h2>
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-gray-100 border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="newest">Date added (newest)</option>
                 <option value="oldest">Date added (oldest)</option>
                 <option value="popular">Most popular</option>
               </select>
-            </div>
+            </header>
 
-            {/* Videos Grid - Same as Home styling */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {sortedVideos.map((video) => (
-                <VideoCard key={video._id} video={video} showChannel={false} />
+                <article
+                  key={video._id}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden relative group transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
+                  onClick={() => navigate(`/video/${video._id}`)}
+                >
+                  <div className="relative">
+                    <img
+                      src={getThumbnailUrl(video)}
+                      alt={video.title}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FaPlay className="text-white text-2xl" />
+                    </div>
+                  </div>
+
+                  {isManageMode && isOwner && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmDelete(video._id);
+                      }}
+                      disabled={deletingVideo === video._id}
+                      className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 disabled:opacity-50 cursor-pointer"
+                      title="Delete video"
+                    >
+                      <FaTrash size={10} />
+                    </button>
+                  )}
+
+                  <div className="p-3">
+                    <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
+                      {video.title}
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {video.views} views •{" "}
+                      {new Date(video.uploadDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                </article>
               ))}
             </div>
-          </div>
+          </section>
         )}
-      </div>
+      </section>
+
+      <NotificationAlert
+        isOpen={alertOpen}
+        type="confirm"
+        message="Are you sure you want to delete this video? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setAlertOpen(false)}
+      />
     </div>
   );
 };

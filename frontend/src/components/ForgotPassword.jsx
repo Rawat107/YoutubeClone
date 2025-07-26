@@ -46,7 +46,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <section className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-xl shadow p-8 space-y-6">
         {step === 1 && (
           <form onSubmit={submitEmail} className="space-y-4">
@@ -107,7 +107,7 @@ const ForgotPassword = () => {
           onClose={() => setAlert(null)}
         />
       )}
-    </div>
+    </section>
   );
 };
 

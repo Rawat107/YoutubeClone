@@ -134,9 +134,9 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
-        <div className="text-center">
+        <section className="text-center">
           <img
             src="https://www.gstatic.com/youtube/img/branding/youtubelogo/svg/youtubelogo.svg"
             alt="YouTube"
@@ -150,7 +150,7 @@ function Login() {
               ? (forgotStep === 1 ? "Enter your email to reset password" : "Set your new password")
               : "Sign in to your account"}
           </p>
-        </div>
+        </section>
 
         {!showForgotPassword ? (
           // Regular Login Form
@@ -161,7 +161,7 @@ function Login() {
               </div>
             )}
             
-            <div className="space-y-4">
+            <fieldset className="space-y-4">
               <div>
                 <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-1">
                   Email or Username
@@ -210,7 +210,7 @@ function Login() {
                   </button>
                 </div>
               </div>
-            </div>
+            </fieldset>
 
             <button
               type="submit"
@@ -326,7 +326,7 @@ function Login() {
         />
       )}
 
-    </div>
+    </section>
   );
 }
 

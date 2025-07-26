@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useMemo } from "react";
+import { FaEdit, FaCog } from "react-icons/fa";
 import { generateSeededRandom } from "../utils/channelUtils.js";
 
 const ChannelHeader = ({ 
@@ -8,7 +9,10 @@ const ChannelHeader = ({
   user, 
   videoCount, 
   isOwner, 
-  activeTab = "home" 
+  activeTab = "home",
+  isManageMode = false,
+  onToggleManageMode,
+  onCustomizeChannel
 }) => {
   const [showMore, setShowMore] = useState(false);
 
@@ -16,6 +20,7 @@ const ChannelHeader = ({
     const channelIdentifier = channel?.name || username || "default";
     return generateSeededRandom(channelIdentifier, 100, 50000);
   }, [channel?.name, username]);
+
 
   const avatarColor = useMemo(() => {
     const colors = ["bg-purple-500", "bg-blue-500", "bg-green-500", "bg-amber-500"];
@@ -32,10 +37,10 @@ const ChannelHeader = ({
   };
 
   const getBannerUrl = () => {
-    if (channel.banner === "") {
+    if (channel?.banner === "") {
       return displayChannel.banner;
     }
-    return channel.banner || displayChannel.banner;
+    return channel?.banner || displayChannel.banner;
   };
 
   const getChannelName = () => {
@@ -61,78 +66,104 @@ const ChannelHeader = ({
 
   return (
     <>
-      {/* BANNER - EXACT SAME STYLING */}
-      <div
-        className="w-full h-32 sm:h-40 md:h-52 bg-center bg-cover rounded-xl"
-        style={{ backgroundImage: `url(${getBannerUrl()})` }}
-      ></div>
+      {/* BANNER SECTION */}
+      <article className="w-full h-32 sm:h-40 md:h-48 lg:h-56 xl:h-64 relative overflow-hidden rounded-lg mb-4">
+        <img
+          src={getBannerUrl()}
+          alt={`${getChannelName()} banner`}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.src = displayChannel.banner;
+          }}
+        />
+      </article>
 
-      {/* CHANNEL INFO - EXACT SAME STYLING */}
-      <div className="mt-4 flex flex-col sm:flex-row sm:items-start gap-4">
-        <div className="flex items-start gap-4 flex-1">
-          <div
-            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold ${avatarColor}`}
-            style={{ aspectRatio: 1 }}
-          >
-            {getChannelName().charAt(0).toUpperCase()}
-          </div>
+      {/* CHANNEL INFO SECTION */}
+      <article className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full ${avatarColor} flex items-center justify-center text-white text-2xl sm:text-3xl font-bold`}>
+          {getChannelName().charAt(0).toUpperCase()}
+        </div>
 
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold">{getChannelName()}</h2>
-            <p className="text-gray-600">{getChannelHandle()}</p>
-            <p className="text-gray-500 mt-1">
-              {subCount.toLocaleString()} subscribers • {videoCount} videos
-            </p>
-
-            <div className="mt-1 text-sm text-gray-700">
-              <p className={showMore ? "whitespace-pre-wrap" : "line-clamp-1"}>
-                {getChannelDescription()}
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+            {getChannelName()}
+          </h1>
+          <p className="text-gray-600 mb-2">{getChannelHandle()}</p>
+          <p className="text-sm text-gray-500 mb-3">
+            {subCount.toLocaleString()} subscribers • {videoCount} videos
+          </p>
+          
+          <div className="text-sm text-gray-700">
+            {showMore ? (
+              <p>{getChannelDescription()}</p>
+            ) : (
+              <p>
+                {getChannelDescription().length > 100
+                  ? `${getChannelDescription().substring(0, 100)}...`
+                  : getChannelDescription()}
               </p>
-              {getChannelDescription().length > 100 && (
-                <button
-                  onClick={() => setShowMore((prev) => !prev)}
-                  className="text-blue-600 hover:underline mt-1"
-                >
-                  {showMore ? "Show less" : "Show more"}
-                </button>
-              )}
-            </div>
+            )}
+            {getChannelDescription().length > 100 && (
+              <button
+                onClick={() => setShowMore(!showMore)}
+                className="text-blue-600 hover:text-blue-800 font-medium mt-1"
+              >
+                {showMore ? "Show less" : "Show more"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* OWNER BUTTONS - EXACT SAME STYLING */}
+        {/* ACTION BUTTONS */}
         {isOwner && (
-          <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-            <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
-              Customize Channel
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={onCustomizeChannel}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full cursor-pointer hover:bg-gray-200 transition-colors"
+            >
+              <FaCog size={16} />
+              <span>Customize channel</span>
             </button>
-            <Link to={`/channel/${username}/videos`}>
-              <button className="px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-full hover:bg-gray-50 transition-colors cursor-pointer">
-                Manage Videos
-              </button>
-            </Link>
+            <button
+              onClick={onToggleManageMode}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors cursor-pointer ${
+                isManageMode
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              <FaEdit size={16} />
+              <span>{isManageMode ? 'Exit manage' : 'Manage videos'}</span>
+            </button>
           </div>
         )}
-      </div>
+      </article>
 
-      {/* TABS - EXACT SAME STYLING */}
-      <div className="mt-6 border-b border-gray-300 flex space-x-6 text-sm sm:text-base font-medium">
-        <Link to={`/channel/${username}`}>
-          <button className={`pb-3 px-1 border-b-2  cursor-pointer ${activeTab === "home" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
-            Home
-          </button>
-        </Link>
-        {videoCount > 0 && (
-          <Link to={`/channel/${username}/videos`}>
-            <button className={`pb-3 px-1 border-b-2  cursor-pointer ${activeTab === "videos" ? "border-black" : "border-transparent text-gray-600 hover:text-black hover:border-gray-300"}`}>
-              Videos
-            </button>
+      {/* NAVIGATION TABS */}
+      <nav className="border-b border-gray-200">
+        <div className="flex space-x-8">
+          <Link
+            to={username ? `/channel/${username}` : '/channel'}
+            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'home'
+                ? 'border-red-500 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            HOME
           </Link>
-        )}
-        <button className="pb-3 px-1 text-gray-600 cursor-pointer  hover:text-black border-b-2 border-transparent hover:border-gray-300">
-          Posts
-        </button>
-      </div>
+          <Link
+            to={username ? `/channel/${username}/videos` : '/channel/videos'}
+            className={`py-3 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'videos'
+                ? 'border-red-500 text-red-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            VIDEOS
+          </Link>
+        </div>
+      </nav>
     </>
   );
 };

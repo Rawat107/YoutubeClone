@@ -32,7 +32,7 @@ const VideoCard = ({ video, showChannel = true }) => {
 
   return (
     <Link to={`/video/${video._id}`} className="block max-w-full hover:shadow-md p-1">
-      <div className="relative w-full aspect-video rounded overflow-hidden">
+      <section className="relative w-full aspect-video rounded overflow-hidden">
         <img
           src={getThumbnailUrl(video)}
           alt={video.title}
@@ -42,9 +42,9 @@ const VideoCard = ({ video, showChannel = true }) => {
         <span className="absolute bottom-1 right-1 bg-gray-900 text-white text-xs px-1 py-0.5 rounded">
           {staticDuration}
         </span>
-      </div>
+      </section>
 
-      <div className="mt-2 flex gap-2">
+      <section className="mt-2 flex gap-2">
         <div className="flex-1">
           <h4 className="font-medium leading-snug line-clamp-2">
             {video.title}
@@ -56,7 +56,7 @@ const VideoCard = ({ video, showChannel = true }) => {
             {video.views?.toLocaleString()} views • {new Date(video.uploadDate).toLocaleDateString()}
           </p>
         </div>
-      </div>
+      </section>
     </Link>
   );
 };

@@ -51,7 +51,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-red-100">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
         <div className="text-center">
           <img
@@ -78,7 +78,7 @@ function Register() {
             </div>
           )}
           
-          <div className="space-y-4">
+          <fieldset className="space-y-4">
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Username
@@ -136,7 +136,7 @@ function Register() {
               )}
               <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters long</p>
             </div>
-          </div>
+          </fieldset>
 
           <button
             type="submit"
@@ -171,7 +171,7 @@ function Register() {
           </div>
         </form>
       </div>
-    </div>
+    </section>
   );
 }
 

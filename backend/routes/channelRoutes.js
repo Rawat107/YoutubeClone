@@ -4,8 +4,7 @@ import {
   getUserChannel, 
   getChannelByUsername, 
   getAllChannels,
-  updateChannel,
-  deleteChannel 
+  updateChannel, 
 } from '../controllers/channelController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
@@ -15,8 +14,6 @@ const router = express.Router();
 router.post('/channels', authenticateToken, createChannel);
 router.get('/channels/my', authenticateToken, getUserChannel);
 router.put('/channels/my', authenticateToken, updateChannel);
-router.delete('/channels/my', authenticateToken, deleteChannel);
-
 // Public routes
 router.get('/channels', getAllChannels);
 router.get('/channels/:username', getChannelByUsername);

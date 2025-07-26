@@ -167,8 +167,7 @@ export const getAllChannels = async (req, res, next) => {
 export const updateChannel = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const { name, description, banner } = req.body;
-
+    const { name, username, description, banner } = req.body;
     // Find channel by user ID
     const channel = await Channel.findOne({ userId });
     if (!channel) {
@@ -177,6 +176,9 @@ export const updateChannel = async (req, res, next) => {
 
     // Update channel fields if provided
     if (name) channel.name = name.trim();
+    if (username) {
+       channel.username = username.toLowerCase().trim();
+    }
     if (description !== undefined) channel.description = description.trim();
     if (banner !== undefined) channel.banner = banner;
 
@@ -194,35 +196,3 @@ export const updateChannel = async (req, res, next) => {
   }
 };
 
-// Delete the current user's channel and its videos
-export const deleteChannel = async (req, res, next) => {
-  try {
-    const userId = req.user._id;
-
-    // Find the user's channel
-    const channel = await Channel.findOne({ userId });
-    if (!channel) {
-      return res.status(404).json({ message: 'Channel not found' });
-    }
-
-    // Delete all videos belonging to this channel
-    await Video.deleteMany({ channelId: channel._id });
-
-    // Remove the channel from the user's list
-    await User.findByIdAndUpdate(userId, {
-      $pull: { channels: channel._id }
-    });
-
-    // Delete the channel itself
-    await Channel.findByIdAndDelete(channel._id);
-
-    // Respond with success
-    res.json({
-      message: 'Channel deleted successfully',
-      success: true
-    });
-  } catch (error) {
-    console.error('Delete channel error:', error);
-    next(error);
-  }
-};

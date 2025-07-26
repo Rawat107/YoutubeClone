@@ -75,18 +75,18 @@ const CreateChannel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <section className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
+        <section>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your channel
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Set up your YouTube channel to start sharing your content
           </p>
-        </div>
+        </section>
 
-        <div className="bg-white py-8 px-6 shadow rounded-lg">
+        <section className="bg-white py-8 px-6 shadow rounded-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
               <div className="rounded-md bg-red-50 p-4">
@@ -153,7 +153,7 @@ const CreateChannel = () => {
             </div>
 
             {/* NEW: Banner Upload Section */}
-            <div>
+            <section>
               <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-2">
                 Channel Banner URL <span className="text-gray-400 text-xs">(optional)</span>
               </label>
@@ -191,9 +191,9 @@ const CreateChannel = () => {
               {errors.banner && (
                 <p className="mt-2 text-sm text-red-600">{errors.banner}</p>
               )}
-            </div>
+            </section>
 
-            <div className="flex justify-end space-x-3">
+            <section className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={handleCancel}
@@ -208,11 +208,11 @@ const CreateChannel = () => {
               >
                 {loading ? 'Creating...' : 'Create Channel'}
               </button>
-            </div>
+            </section>
           </form>
-        </div>
+        </section>
       </div>
-    </div>
+    </section>
   );
 };
 

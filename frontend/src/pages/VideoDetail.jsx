@@ -275,10 +275,10 @@ const VideoDetail = () => {
     "Unknown Channel";
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
+    <section className="max-w-7xl mx-auto p-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main video content */}
-        <div className="lg:col-span-2">
+        <main className="lg:col-span-2">
           {/* Video Player */}
           <div className="bg-black rounded-lg overflow-hidden mb-4">
             {isYouTubeUrl(video.videoUrl) ? (
@@ -389,14 +389,14 @@ const VideoDetail = () => {
                       <button
                         type="button"
                         onClick={() => setNewComment("")}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                        className="px-4 py-2 text-gray-600 hover:text-gray-800 cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={!newComment.trim()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
                       >
                         Comment
                       </button>
@@ -421,14 +421,14 @@ const VideoDetail = () => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleEditComment(c.id, c.text)}
-                            className="text-gray-500 hover:text-blue-600 p-1"
+                            className="text-gray-500 hover:text-blue-600 p-1 cursor-pointer"
                             title="Edit comment"
                           >
                             <FaEdit className="text-sm" />
                           </button>
                           <button
                             onClick={() => handleDeleteComment(c.id)}
-                            className="text-gray-500 hover:text-red-600 p-1"
+                            className="text-gray-500 hover:text-red-600 p-1 cursor-pointer"
                             title="Delete comment"
                           >
                             <FaTrash className="text-sm" />
@@ -471,7 +471,7 @@ const VideoDetail = () => {
               ))}
             </div>
           </div>
-        </div>
+        </main>
 
         {/* Suggested videos sidebar */}
         <div className="lg:col-span-1">
@@ -518,7 +518,7 @@ const VideoDetail = () => {
         onConfirm={() => setShowAlert({ open: false, message: "" })}
       />
 
-    </div>
+    </section>
   );
 };
 
