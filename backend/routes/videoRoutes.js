@@ -1,16 +1,19 @@
-// routes/videoRoutes.js
 import express from 'express';
 import { authenticateToken, optionalAuth } from '../middleware/authMiddleware.js';
 import uploadWithLimits from '../middleware/multerConfig.js';
-import Video from '../models/Video.js'; // FIXED: Added missing import
+import Video from '../models/Video.js';
 import {
   uploadVideo,
   getAllVideos,
   getVideoById,
   getVideosByUser,
+  getVideoComments,
   deleteVideo,
   toggleLike,
-  toggleDislike
+  toggleDislike,
+  addComment,
+  editComment,
+  deleteComment
 } from '../controllers/videoController.js';
 
 const router = express.Router();
@@ -20,14 +23,14 @@ router.get('/videos', optionalAuth, getAllVideos);
 router.get('/videos/:id', optionalAuth, getVideoById);
 router.get('/videos/user/:userId', getVideosByUser);
 
-// FIXED: Proper route handler with error handling
+// Channel videos route
 router.get('/videos/channel/:channelId', async (req, res) => {
   try {
     const { channelId } = req.params;
     const videos = await Video.find({ channelId })
       .populate('userId', 'username email')
       .sort({ uploadDate: -1 });
-    
+
     res.json({ videos });
   } catch (error) {
     console.error('Get channel videos error:', error);
@@ -40,5 +43,11 @@ router.post('/videos/upload', authenticateToken, uploadWithLimits, uploadVideo);
 router.delete('/videos/:id', authenticateToken, deleteVideo);
 router.post('/videos/:id/like', authenticateToken, toggleLike);
 router.post('/videos/:id/dislike', authenticateToken, toggleDislike);
+
+// Comment routes (all require authentication)
+router.get('/videos/:id/comments', getVideoComments);
+router.post('/videos/:id/comments', authenticateToken, addComment);
+router.put('/videos/:videoId/comments/:commentId', authenticateToken, editComment);
+router.delete('/videos/:videoId/comments/:commentId', authenticateToken, deleteComment);
 
 export default router;

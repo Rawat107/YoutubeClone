@@ -86,9 +86,10 @@ const VideoDetail = () => {
 
   useEffect(() => {
     const fetchVideoData = async () => {
+      setError(null);
+      setLoading(true);
+
       try {
-        setError(null);
-        
         // Fetch the specific video
         const response = await axios.get(`/videos/${id}`);
         if (response.data && response.data.video) {
@@ -98,31 +99,41 @@ const VideoDetail = () => {
         } else {
           throw new Error('Video not found');
         }
-        
-        // Fetch suggested videos
-        try {
-          const suggestedResponse = await axios.get('/videos?limit=10');
-          const allVideos = suggestedResponse.data.videos || [];
-          // Filter out current video and get random suggestions
-          const filtered = allVideos.filter(v => v._id !== id).slice(0, 8);
-          setSuggestedVideos(filtered);
-        } catch (suggestError) {
-          console.warn('Failed to fetch suggested videos:', suggestError);
-          setSuggestedVideos([]);
-        }
-        
       } catch (error) {
         console.error("Error fetching video:", error);
         setError(error.response?.data?.message || 'Failed to load video');
-      } finally {
         setLoading(false);
+        return;
       }
+
+      // Fetch persistent comments from the backend
+      try {
+        const { data } = await axios.get(`/videos/${id}/comments`);
+        setComments(data.comments || []);
+      } catch (commentError) {
+        console.warn('Failed to fetch comments:', commentError);
+        setComments([]);
+      }
+
+      // Fetch suggested videos
+      try {
+        const suggestedResponse = await axios.get('/videos?limit=10');
+        const allVideos = suggestedResponse.data.videos || [];
+        const filtered = allVideos.filter(v => v._id !== id).slice(0, 8);
+        setSuggestedVideos(filtered);
+      } catch (suggestError) {
+        console.warn('Failed to fetch suggested videos:', suggestError);
+        setSuggestedVideos([]);
+      }
+
+      setLoading(false);
     };
 
     if (id) {
       fetchVideoData();
     }
   }, [id]);
+
 
   const handleLike = async () => {
     if (!user) {
@@ -172,28 +183,33 @@ const VideoDetail = () => {
     }
   };
 
-  const handleAddComment = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      setShowAuthPrompt(true);
-      return;
-    }
+  // Update handleAddComment in VideoDetail.jsx
+const handleAddComment = async (e) => {
+  e.preventDefault();
+  if (!user) {
+    setShowAuthPrompt(true);
+    return;
+  }
 
-    if (!newComment.trim()) {
-      setShowAlert({ open: true, message: "Comment cannot be empty" });
-      return;
-    }
+  if (!newComment.trim()) {
+    setShowAlert({ open: true, message: "Comment cannot be empty" });
+    return;
+  }
 
-    const newCommentObj = {
-      id: Date.now(),
-      user: user.username,
-      text: newComment,
-      timestamp: "Just now",
-      userId: user.id || user._id,
-    };
-    setComments([newCommentObj, ...comments]);
+  try {
+    const { data } = await axios.post(`/videos/${id}/comments`, {
+      text: newComment.trim()
+    });
+    
+    // Add the new comment to the beginning of the comments array
+    setComments([data.comment, ...comments]);
     setNewComment("");
-  };
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    setShowAlert({ open: true, message: "Failed to add comment" });
+  }
+};
+
 
 
   const handleEditComment = (commentId, currentText) => {
@@ -201,27 +217,29 @@ const VideoDetail = () => {
     setEditCommentText(currentText);
   };
 
-  const handleSaveEdit = () => {
-    if (!editCommentText.trim()) {
-      alert("Comment cannot be empty");
-      return;
-    }
-
-    setComments(prevComments =>
-      prevComments.map(comment =>
-        comment.id === editingCommentId
-          ? { 
-              ...comment, 
-              text: editCommentText.trim(),
-              timestamp: "Edited just now" 
-            }
-          : comment
+  const handleSaveEdit = async () => {
+  if (!editCommentText.trim()) {
+    setShowAlert({ open: true, message: "Comment cannot be empty" });
+    return;
+  }
+  try {
+    const { data } = await axios.put(`/videos/${id}/comments/${editingCommentId}`, {
+      text: editCommentText.trim()
+    });
+    setComments(prev =>
+      prev.map(c =>
+        c._id === editingCommentId
+          ? { ...c, text: data.comment.text, timestamp: data.comment.timestamp }
+          : c
       )
     );
-    
     setEditingCommentId(null);
     setEditCommentText("");
-  };
+  } catch (err) {
+    setShowAlert({ open: true, message: "Failed to update comment" });
+  }
+};
+
 
   const handleCancelEdit = () => {
     setEditingCommentId(null);
@@ -408,7 +426,7 @@ const VideoDetail = () => {
 
             <div className="space-y-4">
               {comments.map((c) => (
-                <div key={c.id} className="flex space-x-3">
+                <div key={c._id} className="flex space-x-3">
                 <FaUserCircle className={`text-2xl ${avatarColor}`} />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -420,14 +438,14 @@ const VideoDetail = () => {
                       {isCommentOwner(c) && (
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleEditComment(c.id, c.text)}
+                            onClick={() => handleEditComment(c._id, c.text)}
                             className="text-gray-500 hover:text-blue-600 p-1 cursor-pointer"
                             title="Edit comment"
                           >
                             <FaEdit className="text-sm" />
                           </button>
                           <button
-                            onClick={() => handleDeleteComment(c.id)}
+                            onClick={() => handleDeleteComment(c._id)}
                             className="text-gray-500 hover:text-red-600 p-1 cursor-pointer"
                             title="Delete comment"
                           >
@@ -437,7 +455,7 @@ const VideoDetail = () => {
                       )}
                     </div>
                     
-                    {editingCommentId === c.id ? (
+                    {editingCommentId === c._id ? (
                       <div className="mt-2">
                         <input
                           type="text"
@@ -495,7 +513,7 @@ const VideoDetail = () => {
         message="Are you sure you want to delete this comment?"
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={() => {
-          setComments(prev => prev.filter(c => c.id !== deleteCommentId));
+          setComments(prev => prev.filter(c => c._id !== deleteCommentId));
           setShowDeleteConfirm(false);
         }}
       />

@@ -1,16 +1,16 @@
 import Video from '../models/Video.js';
 import Channel from '../models/Channel.js';
+import mongoose from 'mongoose';
 
-// Get videos by channel ID - NEW FUNCTION
+// Get videos by channel ID
 export const getVideosByChannel = async (req, res) => {
   try {
     const { channelId } = req.params;
-    
     const videos = await Video.find({ channelId })
       .populate('userId', 'username email')
       .populate('channelId', 'name username')
       .sort({ uploadDate: -1 });
-    
+
     res.json({ videos });
   } catch (error) {
     console.error('Get channel videos error:', error);
@@ -50,6 +50,8 @@ export const uploadVideo = async (req, res) => {
       visibility: visibility || 'public',
       userId: req.user._id,
       channelId: channel._id,
+      comments: [], // Initialize empty comments array
+      commentCount: 0
     });
 
     await video.save();
@@ -71,24 +73,25 @@ export const uploadVideo = async (req, res) => {
         uploadDate: video.uploadDate,
         views: video.views,
         likes: video.likes,
-        dislikes: video.dislikes
+        dislikes: video.dislikes,
+        commentCount: video.commentCount
       }
     });
-
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ error: 'Failed to upload video' });
   }
 };
 
+// Get all videos
 export const getAllVideos = async (req, res) => {
   try {
     const { category, search, limit = 20, page = 1 } = req.query;
     let query = {};
 
     query.$or = [
-      { isSampleData: true }, // Include all sample videos
-      { isSampleData: { $ne: true }, visibility: 'public' } // Include only public user videos
+      { isSampleData: true },
+      { isSampleData: { $ne: true }, visibility: 'public' }
     ];
 
     if (category && category !== 'All') {
@@ -109,27 +112,22 @@ export const getAllVideos = async (req, res) => {
       .populate({
         path: 'userId',
         select: 'username avatar',
-        match: { _id: { $exists: true } } // Only populate if userId exists (real videos)
+        match: { _id: { $exists: true } }
       })
       .populate({
-        path: 'channelId', 
+        path: 'channelId',
         select: 'name username',
-        match: { _id: { $exists: true } } // Only populate if channelId exists (real videos)
+        match: { _id: { $exists: true } }
       })
       .sort({ uploadDate: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    // Transform videos to ensure consistent channelName field
     const transformedVideos = videos.map(video => {
       const videoObj = video.toObject();
-      
-      // For real user videos, get channel name from populated channelId
       if (!videoObj.isSampleData && videoObj.channelId) {
         videoObj.channelName = videoObj.channelId.name;
       }
-      // For sample videos, channelName is already stored directly
-      
       return videoObj;
     });
 
@@ -142,29 +140,27 @@ export const getAllVideos = async (req, res) => {
       currentPage: parseInt(page),
       totalVideos
     });
-
   } catch (error) {
     console.error('Get all videos error:', error);
     res.status(500).json({ message: 'Failed to fetch videos' });
   }
 };
 
-
-// Get single video by ID
+// Get single video by ID with comments
 export const getVideoById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const video = await Video.findById(id)
       .populate({
         path: 'channelId',
         select: 'name username',
-        match: { _id: { $exists: true } } // Only populate if channelId exists
+        match: { _id: { $exists: true } }
       })
       .populate({
         path: 'userId',
         select: 'username avatar',
-        match: { _id: { $exists: true } } // Only populate if userId exists
+        match: { _id: { $exists: true } }
       });
 
     if (!video) {
@@ -179,13 +175,136 @@ export const getVideoById = async (req, res) => {
       success: true,
       video
     });
-
   } catch (error) {
     console.error('Get video by ID error:', error);
     res.status(500).json({ message: 'Failed to fetch video' });
   }
 };
 
+// Controller to fetch comments for a video
+export const getVideoComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const video = await Video.findById(id);
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+    res.json({ comments: video.comments || [] });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch comments" });
+  }
+};
+
+
+// Add comment to video
+export const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+    const username = req.user.username;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    const video = await Video.findById(id);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const newComment = {
+      _id: new mongoose.Types.ObjectId(),
+      text: text.trim(),
+      user: username,
+      userId: userId,
+      timestamp: new Date(),
+      isSampleComment: false
+    };
+
+    video.comments.unshift(newComment); // Add to beginning
+    await video.save();
+
+    res.status(201).json({
+      message: 'Comment added successfully',
+      comment: newComment
+    });
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+};
+
+// Edit comment
+export const editComment = async (req, res) => {
+  try {
+    const { videoId, commentId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const comment = video.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Check if user owns the comment
+    if (comment.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to edit this comment' });
+    }
+
+    comment.text = text.trim();
+    comment.timestamp = new Date();
+    await video.save();
+
+    res.json({
+      message: 'Comment updated successfully',
+      comment: comment
+    });
+  } catch (error) {
+    console.error('Edit comment error:', error);
+    res.status(500).json({ error: 'Failed to edit comment' });
+  }
+};
+
+// Delete comment
+export const deleteComment = async (req, res) => {
+  try {
+    const { videoId, commentId } = req.params;
+    const userId = req.user._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const comment = video.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+
+    // Check if user owns the comment
+    if (comment.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to delete this comment' });
+    }
+
+    video.comments.pull(commentId);
+    await video.save();
+
+    res.json({ message: 'Comment deleted successfully' });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
+  }
+};
 
 // Get videos by user ID
 export const getVideosByUser = async (req, res) => {
@@ -198,7 +317,6 @@ export const getVideosByUser = async (req, res) => {
       .sort({ uploadDate: -1 });
 
     res.json(videos);
-
   } catch (error) {
     console.error('Get user videos error:', error);
     res.status(500).json({ error: 'Failed to fetch user videos' });
@@ -227,7 +345,6 @@ export const deleteVideo = async (req, res) => {
     await Video.findByIdAndDelete(id);
 
     res.json({ message: 'Video deleted successfully' });
-
   } catch (error) {
     console.error('Delete video error:', error);
     res.status(500).json({ error: 'Failed to delete video' });
@@ -251,7 +368,6 @@ export const toggleLike = async (req, res) => {
       message: 'Video liked',
       likes: video.likes
     });
-
   } catch (error) {
     console.error('Like video error:', error);
     res.status(500).json({ error: 'Failed to like video' });
@@ -275,7 +391,6 @@ export const toggleDislike = async (req, res) => {
       message: 'Video disliked',
       dislikes: video.dislikes
     });
-
   } catch (error) {
     console.error('Dislike video error:', error);
     res.status(500).json({ error: 'Failed to dislike video' });
