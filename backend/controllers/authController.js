@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt"
 
 // Function to generate JWT token with user ID and username
 const generateToken = (user) => {
@@ -39,8 +40,9 @@ export const registerUser = async (req, res, next) => {
       });
     }
 
+    const hash = bcrypt.hashSync(password, 10);
     // Create and save new user
-    const user = await User.create({ username, email, password });
+    const user = await User.create({ username, email, password: hash });
 
     // Respond with success message
     res.status(201).json({ message: "User registered successfully" });
@@ -72,19 +74,24 @@ export const loginUser = async (req, res, next) => {
     let user;
     if (email) {
       user = await User.findOne({ email });
-      if (!user) return res.status(404).json({ error: "Email not found" });
+      if (!user) return res.status(404).json({ errors: {identifier: "Email not found" } });
     } else {
       user = await User.findOne({ username });
-      if (!user) return res.status(404).json({ error: "Username not found" });
+      if (!user) return res.status(404).json({ errors: {identifier: "Username not found" } });
     }
 
-    // Compare passwords (note: no hashing here, just plain check)
-    if (user.password !== password) {
-      return res.status(401).json({ error: "Invalid password" });
+    // Compare passwords using bcrypt compareSync
+    const valid = bcrypt.compareSync(password, user.password);
+    if(!valid){
+      return res.status(401).josn({errors: {password: "Invalid Password"}})
     }
+    
 
     // Generate JWT token
     const token = generateToken(user);
+
+    // Remove password from user object before sending response
+    const { password: _PW, ...safeUser } = user.toObject();
 
     // Send user data and token
     res.status(200).json({
@@ -137,7 +144,8 @@ export const resetPassword = async (req, res) => {
     return res.status(404).json({ ok: false, message: "User not found." });
 
   // Update user's password 
-  user.password = password; 
+  const hash = bcrypt.hashSync(password, 10)
+  user.password = hash; 
   await user.save();
 
   // Respond with success

@@ -101,7 +101,7 @@ const generateSampleComments = (videoTitle, category) => {
   return selectedComments.map((text, index) => ({
     _id: new mongoose.Types.ObjectId(),
     text: text,
-    user: `SampleUser${index + 1}`,
+    user: `User${index + 1}`,
     userId: new mongoose.Types.ObjectId(), // Generate fake ObjectId for sample comments
     timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000), // Random date within last 30 days
     isSampleComment: true
@@ -117,13 +117,13 @@ const seedSampleVideos = async () => {
 
     // Connect to database
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     // Check if sample videos already exist
     const existingCount = await Video.countDocuments({ isSampleData: true });
     if (existingCount > 0) {
-      console.log(`📹 ${existingCount} sample videos are already imported`);
-      console.log('🔄 Skipping seeding to avoid duplicates.');
+      console.log(` ${existingCount} sample videos are already imported`);
+      console.log(' Skipping seeding to avoid duplicates.');
       return;
     }
 
@@ -152,11 +152,11 @@ const seedSampleVideos = async () => {
 
     // Insert all sample videos at once
     const insertedVideos = await Video.insertMany(videosToInsert);
-    console.log(`✅ Successfully seeded ${insertedVideos.length} sample videos!`);
+    console.log(`Successfully seeded ${insertedVideos.length} sample videos!`);
 
     // Calculate total comments
     const totalComments = insertedVideos.reduce((sum, video) => sum + video.commentCount, 0);
-    console.log(`💬 Added ${totalComments} sample comments across all videos!`);
+    console.log(`Added ${totalComments} sample comments across all videos!`);
 
     // Group by channel for summary
     const channelCounts = {};
@@ -168,19 +168,19 @@ const seedSampleVideos = async () => {
       channelComments[channelName] = (channelComments[channelName] || 0) + video.commentCount;
     });
 
-    console.log('\n📊 Videos and comments per channel:');
+    console.log('\n Videos and comments per channel:');
     Object.entries(channelCounts).forEach(([channel, count]) => {
       console.log(`  • ${channel}: ${count} videos, ${channelComments[channel]} comments`);
     });
 
-    console.log('\n🎉 Sample data seeding completed successfully!');
+    console.log('\n Sample data seeding completed successfully!');
 
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error('Seeding failed:', error);
     process.exit(1);
   } finally {
     await mongoose.connection.close();
-    console.log('🔌 Database connection closed');
+    console.log(' Database connection closed');
     process.exit(0);
   }
 };
