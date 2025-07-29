@@ -8,7 +8,7 @@ export const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     // Check if token is missing or doesn't start with "Bearer"
-    if (!authHeader || !authHeader.startsWith('JWT ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
@@ -49,7 +49,7 @@ export const authenticateToken = authMiddleware;
 export const optionalAuth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('JWT ')) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       req.user = null;
       return next();
     }

@@ -74,7 +74,7 @@ const videoSchema = new mongoose.Schema({
   // Track upload method to handle video playback correctly
   uploadMethod: {
     type: String,
-    enum: ['file', 'url'],
+    enum: ['file', 'url'], //Was trying to add url upload feature
     default: 'file'
   },
   // For user-uploaded videos

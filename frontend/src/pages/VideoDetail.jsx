@@ -251,15 +251,6 @@ const handleAddComment = async (e) => {
     setShowDeleteConfirm(true);
   };
 
-
-  const handleConfirmDelete = () => {
-    setComments(prev =>
-      prev.filter(comment => comment.id !== commentToDelete)
-    );
-    setCommentToDelete(null);
-    setShowConfirmModal(false);
-  };
-
   const isCommentOwner = (comment) => {
     if (!user || !comment.userId) return false;
     const currentUserId = user.id || user._id;

@@ -14,7 +14,7 @@ const router = express.Router();
 router.post('/channels', authenticateToken, createChannel);
 router.get('/channels/my', authenticateToken, getUserChannel);
 router.put('/channels/my', authenticateToken, updateChannel);
-// Public routes
+// Public routes (for futture if we want to fetch every user channel)
 router.get('/channels', getAllChannels);
 router.get('/channels/:username', getChannelByUsername);
 

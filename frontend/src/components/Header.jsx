@@ -17,31 +17,31 @@ import {
 import axios from "../utils/axios";
 
 function Header({ onToggleSidebar }) {
-  const { user, logout } = useAuth();
-  const { searchTerm, setSearchTerm } = useSearch();
+  const { user, logout } = useAuth(); // Auth context
+  const { searchTerm, setSearchTerm } = useSearch(); // Search context
   const [showMobileSearch, setShowMobileSearch] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notification, setNotification] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);  // Avatar dropdown
+  const [notification, setNotification] = useState(null); // Toast notifications
   const navigate = useNavigate();
 
-  const dropdownRef = useRef();
+  const dropdownRef = useRef(); // Ref for dropdown outside click
 
-  const [showCreateMenu, setShowCreateMenu] = useState(false);
-const createMenuRef = useRef();
+  const [showCreateMenu, setShowCreateMenu] = useState(false); // Create menu state
+  const createMenuRef = useRef(); // Ref for "Create" menu
 
-// Close dropdown on outside click
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (
-      createMenuRef.current &&
-      !createMenuRef.current.contains(e.target)
-    ) {
-      setShowCreateMenu(false);
-    }
-  };
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        createMenuRef.current &&
+        !createMenuRef.current.contains(e.target)
+      ) {
+        setShowCreateMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -54,23 +54,29 @@ useEffect(() => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Logout user and close dropdown
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
   };
 
+  // Handle search form submit (you can expand this for routing)
   const handleSearchSubmit = (e) => {
     e.preventDefault();
   };
 
+  // Handle "Create Channel" button click
   const handleCreateClick = async () => {
     if (!user) {
-      navigate('/login');
+      navigate('/login'); // Redirect if not logged in
       return;
     }
 
     try {
-      const response = await axios.get('/channels/my');
+      const response = await axios.get('/channels/my'); // Check if channel exists
+      if (!response.data.channel) {
+        navigate('/create-channel');
+      } else {
       setNotification({
         type: 'info',
         message: 'You already have a channel! Taking you to your channel.',
@@ -80,7 +86,9 @@ useEffect(() => {
         setNotification(null)
         navigate(`/channel/${response.data.channel.username}`);
       }, 1500);
+      }
     } catch (error) {
+      // If not found, allow user to create a channel
       if (error.response?.status === 404) {
         navigate('/create-channel');
       } else {
@@ -90,15 +98,20 @@ useEffect(() => {
     }
   };
 
+  // Handle "Your Channel" option in dropdown
   const handleViewChannelClick = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
-
     try {
       const response = await axios.get('/channels/my');
-      navigate(`/channel/${response.data.channel.username}`);
+      if (!response.data.channel) {
+        navigate('/create-channel');
+      } else {
+
+        navigate(`/channel/${response.data.channel.username}`);
+      }
     } catch (error) {
       if (error.response?.status === 404) {
         navigate('/create-channel');
@@ -109,6 +122,7 @@ useEffect(() => {
     }
   };
 
+  // Generate consistent avatar color based on username
   const avatarColor = useMemo(() => {
     const colors = ["bg-purple-500", "bg-blue-500", "bg-green-500", "bg-amber-500"];
     const index = user?.username?.charCodeAt(0) % colors.length || 0;
@@ -245,9 +259,6 @@ useEffect(() => {
               </div>
             </>
           )}
-
-
-          
 
           {/* Show only on medium+ screens if logged in */}
           {user && (

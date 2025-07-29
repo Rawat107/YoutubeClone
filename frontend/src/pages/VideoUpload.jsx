@@ -24,7 +24,6 @@ const VideoUpload = () => {
 
   const fileInputRef = useRef(null);
   const thumbnailInputRef = useRef(null);
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const categories = [

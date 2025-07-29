@@ -3,10 +3,11 @@ import { useState, useMemo } from "react";
 import { FaEdit, FaCog } from "react-icons/fa";
 import { generateSeededRandom } from "../utils/channelUtils.js";
 
+
+// Header section of the channel page that includes banner, name, stats, description, and tabs
 const ChannelHeader = ({ 
   channel, 
   username, 
-  user, 
   videoCount, 
   isOwner, 
   activeTab = "home",
@@ -14,14 +15,15 @@ const ChannelHeader = ({
   onToggleManageMode,
   onCustomizeChannel
 }) => {
-  const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] = useState(false); // Controls whether full description is shown
 
+  // Generate a pseudo-random subscriber count based on channel name or username
   const subCount = useMemo(() => {
     const channelIdentifier = channel?.name || username || "default";
     return generateSeededRandom(channelIdentifier, 100, 50000);
   }, [channel?.name, username]);
 
-
+  // Determine avatar background color based on username
   const avatarColor = useMemo(() => {
     const colors = ["bg-purple-500", "bg-blue-500", "bg-green-500", "bg-amber-500"];
     const index = username?.charCodeAt(0) % colors.length || 0;
@@ -36,6 +38,7 @@ const ChannelHeader = ({
     description: "Welcome to my channel! I upload content regularly on web development, tutorials, vlogs, and more. Don't forget to subscribe and stay updated with my latest videos.",
   };
 
+  // Utility functions to safely get data (with fallbacks)
   const getBannerUrl = () => {
     if (channel?.banner === "") {
       return displayChannel.banner;

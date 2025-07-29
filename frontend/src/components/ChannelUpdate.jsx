@@ -2,16 +2,22 @@ import { useState } from 'react';
 import { FaTimes, FaImage, FaTrash } from 'react-icons/fa';
 import axios from '../utils/axios';
 
+// ChannelUpdate modal component for editing channel details
 const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
+
+  // Initialize form state with current channel values or defaults
   const [formData, setFormData] = useState({
     name: channel?.name || '',
     username: channel?.username || '',
     description: channel?.description || '',
     banner: channel?.banner || '',
   });
+
+  // Store validation errors and loading state
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // Handle form input changes and clear error for that field
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -20,10 +26,11 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
     }
   };
 
+  // Submit updated form data to the backend API
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setErrors({});
+    setErrors({}); // clear previous errors
 
     try {
       const response = await axios.put('/channels/my', formData, {
@@ -32,8 +39,10 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
         },
       });
       
+      // If update is successful, pass updated data back to parent  
       onUpdate(response.data.channel);
     } catch (error) {
+      // Handle validation or general errors returned from API
       if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
       } else {
@@ -45,6 +54,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
   };
 
   return (
+    // Full-screen dark backdrop for modal
     <section className="fixed inset-0 bg-black/70 backdrop-blur-md bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <header className="flex justify-between items-center p-6 border-b">
@@ -65,6 +75,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
             </div>
           )}
 
+          {/* Channel name input */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
               Channel name *
@@ -84,6 +95,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
             )}
           </div>
 
+          {/* Username input with "@" prefix */}
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               Channel username *
@@ -108,6 +120,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
             )}
           </div>
 
+          {/* Description textarea */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
@@ -123,6 +136,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
             />
           </div>
 
+          {/* Banner URL input with preview */}
           <div>
             <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-2">
               Channel Banner URL <span className="text-gray-400 text-xs">(optional)</span>
@@ -161,6 +175,7 @@ const ChannelUpdate = ({ channel, onClose, onUpdate }) => {
             )}
           </div>
 
+          {/* Form actions: Cancel and Submit */}
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"

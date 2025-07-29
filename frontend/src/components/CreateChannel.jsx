@@ -5,15 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import axios from '../utils/axios';
 
 const CreateChannel = () => {
+
+  // State to hold form input values
   const [formData, setFormData] = useState({
     name: '',
     username: '',
     description: '',
     banner: '', // Added banner field
   });
+
+  // For handling loading state and any form validation errors
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user } = useAuth(); // Get logged-in user from context
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -86,6 +90,7 @@ const CreateChannel = () => {
           </p>
         </section>
 
+
         <section className="bg-white py-8 px-6 shadow rounded-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             {errors.general && (
@@ -94,6 +99,7 @@ const CreateChannel = () => {
               </div>
             )}
 
+            {/* Name input */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Channel name *
@@ -113,6 +119,7 @@ const CreateChannel = () => {
               )}
             </div>
 
+            {/* Username input */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-gray-700">
                 Channel username *
@@ -137,6 +144,7 @@ const CreateChannel = () => {
               )}
             </div>
 
+            {/* Description input */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                 Description
@@ -152,7 +160,7 @@ const CreateChannel = () => {
               />
             </div>
 
-            {/* NEW: Banner Upload Section */}
+            {/* Banner Upload Section */}
             <section>
               <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-2">
                 Channel Banner URL <span className="text-gray-400 text-xs">(optional)</span>

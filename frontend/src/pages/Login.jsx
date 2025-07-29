@@ -13,14 +13,15 @@ function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  
+
   // Forgot password states
   const [forgotStep, setForgotStep] = useState(1); // 1 = email, 2 = new password
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotUserId, setForgotUserId] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [pwError, setPwError] = useState(""); // inline error
   const [alert, setAlert] = useState(null);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -80,7 +81,7 @@ function Login() {
       setAlert({
         message: err.response?.data?.message || "User not found with this email address",
         type: "alert",
-        onConfirm: () => setAlert(null)      
+        onConfirm: () => setAlert(null)
       });
     }
   };
@@ -88,25 +89,21 @@ function Login() {
   // Forgot Password Step 2: Set New Password
   const handleNewPasswordSubmit = async (e) => {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 6) {
-      setAlert({
-        message: "Password must be at least 6 characters long",
-        buttons: [{ label: "OK", action: () => setAlert(null) }]
-      });
+    if (newPassword.length < 6) {
+      setPwError('Password must be at least 6 characters long');
       return;
     }
-
+    setPwError('');
     try {
-      const response = await axios.put(`/reset-password/${forgotUserId}`, { 
-        password: newPassword 
+      const response = await axios.put(`/reset-password/${forgotUserId}`, {
+        password: newPassword
       });
-      
       if (response.data.ok) {
         setAlert({
           message: "Password reset successfully! You can now sign in with your new password.",
           type: "auth",
-          onCancel: () => setAlert(null),          // “Not now”
-          onConfirm: () => {                       // “Sign In”
+          onCancel: () => setAlert(null),        // “Not now”
+          onConfirm: () => {                     // “Sign In”
             setAlert(null);
             setShowForgotPassword(false);
             setForgotStep(1);
@@ -115,12 +112,12 @@ function Login() {
             setForgotUserId("");
           }
         });
-
       }
     } catch (err) {
       setAlert({
         message: err.response?.data?.message || "Failed to reset password",
-        buttons: [{ label: "OK", action: () => setAlert(null) }]
+        type: "alert",
+        onConfirm: () => setAlert(null)
       });
     }
   };
@@ -131,6 +128,7 @@ function Login() {
     setForgotEmail("");
     setNewPassword("");
     setForgotUserId("");
+    setPwError('');
   };
 
   return (
@@ -173,6 +171,7 @@ function Login() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="Enter your email or username"
+                  autoComplete="username"
                   value={formData.identifier}
                   onChange={handleChange}
                 />
@@ -192,6 +191,7 @@ function Login() {
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
                 />
@@ -204,7 +204,7 @@ function Login() {
                   <button
                     type="button"
                     onClick={() => setShowForgotPassword(true)}
-                    className="text-sm text-red-600 hover:text-red-500 font-medium"
+                    className="text-sm text-red-600 hover:text-red-500 cursor-pointer font-medium"
                   >
                     Forgot password?
                   </button>
@@ -287,15 +287,19 @@ function Login() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                     placeholder="Enter your new password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (pwError) setPwError('');
+                    }}
                   />
+                  {pwError && <p className="mt-1 text-sm text-red-600">{pwError}</p>}
                   <p className="mt-1 text-xs text-gray-500">Password must be at least 6 characters long</p>
                 </div>
                 
                 <div className="flex space-x-3">
                   <button
                     type="button"
-                    onClick={() => setForgotStep(1)}
+                    onClick={() => { setForgotStep(1); setPwError(''); }}
                     className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition duration-200"
                   >
                     Back
@@ -325,7 +329,6 @@ function Login() {
           confirmLabel={alert.confirmLabel}
         />
       )}
-
     </section>
   );
 }

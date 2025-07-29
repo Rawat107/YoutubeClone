@@ -90,6 +90,7 @@ function Register() {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                 placeholder="Choose a username"
+                autoComplete="username"
                 value={formData.username}
                 onChange={handleChange}
               />
@@ -109,6 +110,7 @@ function Register() {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                 placeholder="Enter your email"
+                autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
               />
@@ -128,6 +130,7 @@ function Register() {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-200"
                 placeholder="Create a password"
+                autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
               />

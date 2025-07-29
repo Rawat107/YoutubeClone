@@ -98,7 +98,8 @@ export const getUserChannel = async (req, res, next) => {
       .lean();
 
     if (!channel) {
-      return res.status(404).json({ message: 'Channel not found' });
+      return res.json({ success: true,
+        channel: null});
     }
 
     // Respond with the user's channel

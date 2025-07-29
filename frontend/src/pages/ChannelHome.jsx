@@ -8,20 +8,24 @@ import ChannelUpdate from "../components/ChannelUpdate.jsx";
 import NotificationAlert from "../components/NotificationAlert.jsx";
 
 const ChannelHome = () => {
+  // Get the channel username from URL params
   const { username } = useParams();
+
+  // Get the logged-in user from context
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [channel, setChannel] = useState(null);
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [isManageMode, setIsManageMode] = useState(false);
-  const [error, setError] = useState(null);
-  const [deletingVideo, setDeletingVideo] = useState(null);
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertVideoId, setAlertVideoId] = useState(null);
+  // State variables
+  const [channel, setChannel] = useState(null);            // Holds channel info
+  const [videos, setVideos] = useState([]);                // List of videos
+  const [loading, setLoading] = useState(true);            // Loading indicator
+  const [showCreateModal, setShowCreateModal] = useState(false);  // Show create channel CTA
+  const [showUpdateModal, setShowUpdateModal] = useState(false);  // Show update modal
+  const [isManageMode, setIsManageMode] = useState(false); // Toggle manage mode (delete buttons)
+  const [error, setError] = useState(null);                // Error message
+  const [deletingVideo, setDeletingVideo] = useState(null); // Tracks currently deleting video
+  const [alertOpen, setAlertOpen] = useState(false);        // Show confirm delete alert
+  const [alertVideoId, setAlertVideoId] = useState(null);   // ID of video to confirm delete
 
 
   const BASE_URL = import.meta.env.VITE_API_URL;
