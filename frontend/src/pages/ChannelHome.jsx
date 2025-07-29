@@ -5,6 +5,7 @@ import axios from "../utils/axios.js";
 import { FaTrash, FaVideo, FaPlay } from "react-icons/fa";
 import ChannelHeader from "../components/ChannelHeader.jsx";
 import ChannelUpdate from "../components/ChannelUpdate.jsx";
+import NotificationAlert from "../components/NotificationAlert.jsx";
 
 const ChannelHome = () => {
   const { username } = useParams();
@@ -19,6 +20,9 @@ const ChannelHome = () => {
   const [isManageMode, setIsManageMode] = useState(false);
   const [error, setError] = useState(null);
   const [deletingVideo, setDeletingVideo] = useState(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertVideoId, setAlertVideoId] = useState(null);
+
 
   const BASE_URL = import.meta.env.VITE_API_URL;
   const getLocalVideoUrl = (video) => {
@@ -98,22 +102,22 @@ const ChannelHome = () => {
     setShowUpdateModal(false);
   };
 
-  const handleDeleteVideo = async (videoId) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this video? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-    setDeletingVideo(videoId);
+  const handleDeleteVideo = (videoId) => {
+    setAlertVideoId(videoId);
+    setAlertOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setAlertOpen(false);
+    setDeletingVideo(alertVideoId);
     try {
-      await axios.delete(`/videos/${videoId}`);
-      setVideos((prev) => prev.filter((v) => v._id !== videoId));
+      await axios.delete(`/videos/${alertVideoId}`);
+      setVideos(prev => prev.filter(v => v._id !== alertVideoId));
     } catch {
       alert("Failed to delete video. Please try again.");
     } finally {
       setDeletingVideo(null);
+      setAlertVideoId(null);
     }
   };
 
@@ -306,6 +310,13 @@ const ChannelHome = () => {
           onUpdate={handleChannelUpdated}
         />
       )}
+      <NotificationAlert
+        isOpen={alertOpen}
+        type="confirm"
+        message="Are you sure you want to delete this video? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setAlertOpen(false)}
+      />
     </section>
   );
 };
