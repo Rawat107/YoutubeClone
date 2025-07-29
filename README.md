@@ -95,7 +95,7 @@ VITE_API_URL=http://localhost:3000
 
 **Note:**
 
-- Replace `your_mongo_connection_string` with your MongoDB Atlas or local URI.
+- You can use your own mongoURI as well.
 - Use your own credentials for Cloudinary if you intend to use image hosting; otherwise, remove related logic.
 
 ### 4. Run the Project
