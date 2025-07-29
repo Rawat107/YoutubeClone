@@ -16,6 +16,7 @@ const ChannelHeader = ({
   onCustomizeChannel
 }) => {
   const [showMore, setShowMore] = useState(false); // Controls whether full description is shown
+  const DEFAULT_BANNER_URL = "https://png.pngtree.com/thumb_back/fw800/background/20240416/pngtree-colorful-mountain-ranges-and-pine-tree-web-banner-image_15715619.jpg"
 
   // Generate a pseudo-random subscriber count based on channel name or username
   const subCount = useMemo(() => {
@@ -34,17 +35,24 @@ const ChannelHeader = ({
   const displayChannel = channel || {
     name: username || "Channel",
     handle: username ? `@${username}` : "@channel",
-    banner: "https://static.vecteezy.com/system/resources/previews/012/865/505/non_2x/idyllic-mountain-panoramic-landscape-fresh-green-meadows-and-blooming-wildflowers-sun-ray-beautiful-nature-countryside-view-rural-sunny-outdoor-natural-bright-banner-nature-spring-summer-panorama-photo.jpg",
+    banner: "https://as1.ftcdn.net/v2/jpg/03/50/68/30/1000_F_350683074_SSaXPN4XBvmwEKWRG4aU18Kl7kwkOdrg.jpg",
     description: "Welcome to my channel! I upload content regularly on web development, tutorials, vlogs, and more. Don't forget to subscribe and stay updated with my latest videos.",
   };
 
   // Utility functions to safely get data (with fallbacks)
   const getBannerUrl = () => {
-    if (channel?.banner === "") {
-      return displayChannel.banner;
-    }
-    return channel?.banner || displayChannel.banner;
-  };
+  // First, prefer channel.banner if it is a non-empty string
+  if (channel && typeof channel.banner === "string" && channel.banner.trim() !== "") {
+    return channel.banner;
+  }
+  // Next, prefer displayChannel.banner if it is a non-empty string
+  if (displayChannel && typeof displayChannel.banner === "string" && displayChannel.banner.trim() !== "") {
+    return displayChannel.banner;
+  }
+  // Finally, return the ultimate fallback
+  return DEFAULT_BANNER_URL;
+};
+
 
   const getChannelName = () => {
     if (!channel) {

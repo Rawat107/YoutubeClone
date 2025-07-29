@@ -1,6 +1,5 @@
-import Channel from '../models/Channel.js';
-import User from '../models/User.js';
-import Video from '../models/Video.js';
+import Channel from '../models/ChannelModel.js';
+import User from '../models/UserModel.js';
 
 // Create a new channel for the logged-in user
 export const createChannel = async (req, res, next) => {

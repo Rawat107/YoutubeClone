@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 // Import models and data after dotenv is configured
-import Video from '../models/Video.js';
+import Video from '../models/VideoModel.js';
 import sampleVideos from '../data/sampleVideos.js';
 
 // Predefined sample comments for each video

@@ -1,5 +1,5 @@
-import Video from '../models/Video.js';
-import Channel from '../models/Channel.js';
+import Video from '../models/VideoModel.js';
+import Channel from '../models/ChannelModel.js';
 import mongoose from 'mongoose';
 
 // Get videos by channel ID
@@ -145,6 +145,21 @@ export const getAllVideos = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch videos' });
   }
 };
+
+export const getChannelVideos = async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    const videos = await Video.find({ channelId })
+      .populate('userId', 'username email')
+      .sort({ uploadDate: -1 });
+
+    res.json({ videos });
+  } catch (error) {
+    console.error('Get channel videos error:', error);
+    res.status(500).json({ message: 'Failed to fetch channel videos', videos: [] });
+  }
+};
+
 
 // Get single video by ID with comments
 export const getVideoById = async (req, res) => {
