@@ -284,7 +284,7 @@ function Header({ onToggleSidebar }) {
 
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg z-50 p-2">
-                  <div className="flex items-center gap-3 px-3 py-2">
+                  <div className="flex flex-wrap items-center gap-3 px-3 py-2">
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${avatarColor}`}
                     >

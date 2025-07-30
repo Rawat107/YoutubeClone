@@ -214,6 +214,7 @@ const ChannelHome = () => {
               <h2 className="text-xl font-semibold text-gray-900">
                 Latest videos
               </h2>
+              <hr />
             </header>
 
             {videos[0] && (
@@ -260,48 +261,55 @@ const ChannelHome = () => {
             )}
 
             {videos.length > 1 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {videos.slice(1).map((video) => (
-                  <article
-                    key={video._id}
-                    className="bg-white rounded-lg shadow-sm overflow-hidden relative group transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
-                    onClick={() => navigate(`/video/${video._id}`)}
-                  >
-                    <div className="relative">
-                      <img
-                        src={getThumbnailUrl(video)}
-                        alt={video.title}
-                        className="w-full h-32 object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <FaPlay className="text-white text-2xl" />
+              <>
+                <header className="mb-4 mt-8">
+                  <h3 className="text-lg font-semibold text-gray-800">Uploads</h3>
+                  <hr />
+                </header>   
+                           
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {videos.slice(1).map((video) => (
+                    <article
+                      key={video._id}
+                      className="bg-white rounded-lg shadow-sm overflow-hidden relative group transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
+                      onClick={() => navigate(`/video/${video._id}`)}
+                    >
+                      <div className="relative">
+                        <img
+                          src={getThumbnailUrl(video)}
+                          alt={video.title}
+                          className="w-full h-32 object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <FaPlay className="text-white text-2xl" />
+                        </div>
                       </div>
-                    </div>
-                    {isManageMode && isOwner && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteVideo(video._id);
-                        }}
-                        disabled={deletingVideo === video._id}
-                        className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Delete video"
-                      >
-                        <FaTrash size={10} />
-                      </button>
-                    )}
-                    <div className="p-3">
-                      <h4 className="font-medium text-gray-900 text-sm line-clamp-2 hover:text-red-600">
-                        {video.title}
-                      </h4>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {video.views} views •{" "}
-                        {new Date(video.uploadDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
+                      {isManageMode && isOwner && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteVideo(video._id);
+                          }}
+                          disabled={deletingVideo === video._id}
+                          className="absolute top-2 right-2 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer"
+                          title="Delete video"
+                        >
+                          <FaTrash size={10} />
+                        </button>
+                      )}
+                      <div className="p-3">
+                        <h4 className="font-medium text-gray-900 text-sm line-clamp-2 hover:text-red-600">
+                          {video.title}
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {video.views} views •{" "}
+                          {new Date(video.uploadDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}

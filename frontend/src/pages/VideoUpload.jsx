@@ -419,14 +419,14 @@ const VideoUpload = () => {
 
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 ">
                     Category *
                   </label>
                   <select
                     name="category"
                     value={videoData.category}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 cursor-pointer focus:ring-red-500 focus:border-transparent"
                   >
                     {categories.filter(cat => cat !== 'All').map((category) => (
                       <option key={category} value={category}>
@@ -476,14 +476,14 @@ const VideoUpload = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 cursor-pointer">
                     Visibility
                   </label>
                   <select
                     name="visibility"
                     value={videoData.visibility}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent cursor-pointer"
                   >
                     {visibilityOptions.map((option) => (
                       <option key={option.value} value={option.value}>
