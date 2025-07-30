@@ -1,5 +1,3 @@
-// utils/channelUtils.js
-
 export const generateSeededRandom = (seed, min, max) => {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -36,7 +34,7 @@ export const formatViews = (views) => {
   return views.toString();
 };
 
-// ADDED: Generate random duration function
+// Generate random duration function
 export const generateRandomDuration = () => {
   const minutes = Math.floor(Math.random() * 15) + 1; // 1-15 minutes
   const seconds = Math.floor(Math.random() * 60);

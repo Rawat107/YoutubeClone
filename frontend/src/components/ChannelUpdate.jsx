@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaTimes, FaImage, FaTrash } from 'react-icons/fa';
+import { FaTimes, FaTrash } from 'react-icons/fa';
 import axios from '../utils/axios';
 
 // ChannelUpdate modal component for editing channel details

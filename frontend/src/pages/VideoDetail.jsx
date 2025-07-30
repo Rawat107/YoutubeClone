@@ -18,10 +18,13 @@ import axios from "../utils/axios";
 import { generateSeededRandom } from "../utils/channelUtils.js";
 import NotificationAlert from "../components/NotificationAlert.jsx";
 
+
+// - isYouTubeUrl: checks if a video URL is from YouTube
 const isYouTubeUrl = url =>
   typeof url === "string" &&
   (url.includes("youtube.com") || url.includes("youtu.be"));
 
+// - getEmbedUrl: transforms a YouTube URL into an embeddable format
 const getEmbedUrl = url => {
   if (url.includes("youtube.com/watch?v=")) {
     const videoId = url.split("v=")[1].split("&")[0];
@@ -36,18 +39,20 @@ const getEmbedUrl = url => {
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+// - getLocalVideoUrl: resolves local video path using BASE_URL
 const getLocalVideoUrl = video => {
   if (!video?.videoUrl) return "";
   return `${BASE_URL}/${video.videoUrl.replace(/\\/g, "/")}`;
 };
 
+// - getThumbnailUrl: resolves local or remote thumbnail URL
 const getThumbnailUrl = video => {
   if (!video?.thumbnailUrl) return "";
   if (video.thumbnailUrl.startsWith("http")) return video.thumbnailUrl;
   return `${BASE_URL}/${video.thumbnailUrl.replace(/\\/g, "/")}`;
 };
 
-
+// Main logic for VideoDetail page starts here including useState and useEffect for data fetching
 const VideoDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -84,6 +89,7 @@ const VideoDetail = () => {
   }, [user]);
 
 
+  // Fetches video data by ID, associated comments, and list of suggested videos
   useEffect(() => {
     const fetchVideoData = async () => {
       setError(null);
@@ -134,7 +140,7 @@ const VideoDetail = () => {
     }
   }, [id]);
 
-
+ // Handles user interactions for liking/disliking a videO
   const handleLike = async () => {
     if (!user) {
       setShowAuthPrompt(true);
@@ -183,62 +189,63 @@ const VideoDetail = () => {
     }
   };
 
-  // Update handleAddComment in VideoDetail.jsx
-const handleAddComment = async (e) => {
-  e.preventDefault();
-  if (!user) {
-    setShowAuthPrompt(true);
-    return;
-  }
 
-  if (!newComment.trim()) {
-    setShowAlert({ open: true, message: "Comment cannot be empty" });
-    return;
-  }
+  // Functions for adding, editing, canceling, saving, and deleting comments
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setShowAuthPrompt(true);
+      return;
+    }
 
-  try {
-    const { data } = await axios.post(`/videos/${id}/comments`, {
-      text: newComment.trim()
-    });
-    
-    // Add the new comment to the beginning of the comments array
-    setComments([data.comment, ...comments]);
-    setNewComment("");
-  } catch (error) {
-    console.error("Error adding comment:", error);
-    setShowAlert({ open: true, message: "Failed to add comment" });
-  }
-};
+    if (!newComment.trim()) {
+      setShowAlert({ open: true, message: "Comment cannot be empty" });
+      return;
+    }
+
+    try {
+      const { data } = await axios.post(`/videos/${id}/comments`, {
+        text: newComment.trim()
+      });
+      
+      // Add the new comment to the beginning of the comments array
+      setComments([data.comment, ...comments]);
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setShowAlert({ open: true, message: "Failed to add comment" });
+    }
+  };
 
 
 
   const handleEditComment = (commentId, currentText) => {
-    setEditingCommentId(commentId);
-    setEditCommentText(currentText);
+      setEditingCommentId(commentId);
+      setEditCommentText(currentText);
   };
 
   const handleSaveEdit = async () => {
-  if (!editCommentText.trim()) {
-    setShowAlert({ open: true, message: "Comment cannot be empty" });
-    return;
-  }
-  try {
-    const { data } = await axios.put(`/videos/${id}/comments/${editingCommentId}`, {
-      text: editCommentText.trim()
-    });
-    setComments(prev =>
-      prev.map(c =>
-        c._id === editingCommentId
-          ? { ...c, text: data.comment.text, timestamp: data.comment.timestamp }
-          : c
-      )
-    );
-    setEditingCommentId(null);
-    setEditCommentText("");
-  } catch (err) {
-    setShowAlert({ open: true, message: "Failed to update comment" });
-  }
-};
+    if (!editCommentText.trim()) {
+      setShowAlert({ open: true, message: "Comment cannot be empty" });
+      return;
+    }
+    try {
+      const { data } = await axios.put(`/videos/${id}/comments/${editingCommentId}`, {
+        text: editCommentText.trim()
+      });
+      setComments(prev =>
+        prev.map(c =>
+          c._id === editingCommentId
+            ? { ...c, text: data.comment.text, timestamp: data.comment.timestamp }
+            : c
+        )
+      );
+      setEditingCommentId(null);
+      setEditCommentText("");
+    } catch (err) {
+      setShowAlert({ open: true, message: "Failed to update comment" });
+    }
+  };
 
 
   const handleCancelEdit = () => {
@@ -257,6 +264,7 @@ const handleAddComment = async (e) => {
     return String(comment.userId) === String(currentUserId) || comment.user === user.username;
   };
 
+  // Shows loading spinner or error message based on fetch state
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading video...</div>;
   }
@@ -283,6 +291,7 @@ const handleAddComment = async (e) => {
     (video.channelId && video.channelId.name) || 
     "Unknown Channel";
 
+  // Page layout including video player, metadata, channel info, description, comments, and sidebar
   return (
     <section className="max-w-7xl mx-auto p-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

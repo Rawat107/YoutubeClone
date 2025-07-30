@@ -1,6 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import axios from '../utils/axios';
 import { FaCloudUploadAlt, FaVideo, FaImage, FaSpinner, FaCheckCircle, FaTimesCircle, FaEye, FaLock, FaTrash, FaLink } from 'react-icons/fa';
 

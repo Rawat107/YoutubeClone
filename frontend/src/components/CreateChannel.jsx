@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTimes, FaImage, FaTrash } from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import axios from '../utils/axios';
 
