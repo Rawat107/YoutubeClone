@@ -123,7 +123,7 @@ npm run dev
 ## Base Folder Structure
 
 ```
-/frontend         # React frontend (src/, components/, pages/)
+/frontend         # React frontend (src/, components/, pages/...)
   /src
     /components
     /pages
@@ -131,7 +131,7 @@ npm run dev
     main.jsx
   .env
 
-/backend         # Node/Express backend (routes/, controllers/, models/)
+/backend         # Node/Express backend (routes/, controllers/, models/...)
   /routes
   /controllers
   /models
